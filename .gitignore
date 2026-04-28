@@ -1,0 +1,5 @@
+# Ignorar toda la documentación
+docs/
+*.pdf
+*.docx
+*.md
