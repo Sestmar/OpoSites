@@ -5,6 +5,7 @@ import com.oposites.api.model.dto.response.ResultadoTestResponse;
 import com.oposites.api.model.dto.response.SimulacroResponse;
 import com.oposites.api.model.dto.response.TestIniciadoResponse;
 import com.oposites.api.service.SimulacroService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Simulacros", description = "Simulacros oficiales por oposición: inicio, entrega y resultados")
 @RestController
 @RequestMapping("/api/v1/simulacros")
 @RequiredArgsConstructor

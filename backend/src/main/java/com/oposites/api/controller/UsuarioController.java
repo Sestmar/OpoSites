@@ -4,6 +4,7 @@ import com.oposites.api.model.dto.request.UpdatePerfilRequest;
 import com.oposites.api.model.dto.request.UpdateRamaRequest;
 import com.oposites.api.model.dto.response.UsuarioResponse;
 import com.oposites.api.service.UsuarioService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Usuarios", description = "Perfil del usuario autenticado: consulta, edición y baja")
 @RestController
 @RequestMapping("/api/v1/usuarios")
 @RequiredArgsConstructor

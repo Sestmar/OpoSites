@@ -4,6 +4,7 @@ import com.oposites.api.model.dto.response.NoticiaResumenResponse;
 import com.oposites.api.model.dto.response.NoticiaResponse;
 import com.oposites.api.model.enums.TipoNoticia;
 import com.oposites.api.service.NoticiaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Noticias", description = "Noticias y convocatorias por oposición; marcado de leídas")
 @RestController
 @RequestMapping("/api/v1/noticias")
 @RequiredArgsConstructor

@@ -5,6 +5,7 @@ import com.oposites.api.model.dto.request.UpdateEventoRequest;
 import com.oposites.api.model.dto.response.EventoResponse;
 import com.oposites.api.model.enums.TipoEvento;
 import com.oposites.api.service.CalendarioService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Tag(name = "Calendario", description = "Eventos personales del opositor: manuales y auto-generados tras tests/simulacros")
 @RestController
 @RequestMapping("/api/v1/calendario/eventos")
 @RequiredArgsConstructor

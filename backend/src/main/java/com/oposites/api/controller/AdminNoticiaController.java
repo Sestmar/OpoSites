@@ -4,12 +4,14 @@ import com.oposites.api.model.dto.request.CreateNoticiaRequest;
 import com.oposites.api.model.dto.request.UpdateNoticiaRequest;
 import com.oposites.api.model.dto.response.NoticiaResponse;
 import com.oposites.api.service.NoticiaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Noticias", description = "Noticias y convocatorias por oposición; marcado de leídas")
 @RestController
 @RequestMapping("/api/v1/admin/noticias")
 @RequiredArgsConstructor

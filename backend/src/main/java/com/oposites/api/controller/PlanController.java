@@ -5,12 +5,14 @@ import com.oposites.api.model.dto.response.PlanConfiguracionResponse;
 import com.oposites.api.model.dto.response.PlanHoyResponse;
 import com.oposites.api.model.dto.response.PlanTareaResponse;
 import com.oposites.api.service.PlanService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Plan", description = "Plan de estudio diario: tareas de hoy, configuración y completado")
 @RestController
 @RequestMapping("/api/v1/plan")
 @RequiredArgsConstructor

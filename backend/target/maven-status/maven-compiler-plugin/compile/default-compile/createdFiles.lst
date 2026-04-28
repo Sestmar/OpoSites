@@ -31,6 +31,7 @@ com\oposites\api\model\converter\JsonStringListConverter.class
 com\oposites\api\model\dto\response\PlanTareaResponse.class
 com\oposites\api\model\dto\request\CreateTemaRequest.class
 com\oposites\api\repository\SimulacroRepository.class
+com\oposites\api\repository\RefreshTokenRepository.class
 com\oposites\api\model\enums\TipoEvento.class
 com\oposites\api\exception\ApiError$ApiErrorBuilder.class
 com\oposites\api\model\converter\JsonLongListConverter$1.class
@@ -137,6 +138,7 @@ com\oposites\api\model\entity\CalendarioEvento$CalendarioEventoBuilder.class
 com\oposites\api\service\PreguntaService.class
 com\oposites\api\model\dto\request\UpdatePlanConfiguracionRequest.class
 com\oposites\api\model\dto\request\LoginRequest.class
+com\oposites\api\model\entity\RefreshToken$RefreshTokenBuilder.class
 com\oposites\api\controller\PreguntaController.class
 com\oposites\api\model\dto\response\TestIniciadoResponse$TestIniciadoResponseBuilder.class
 com\oposites\api\model\dto\response\TemaResponse.class
@@ -144,6 +146,7 @@ com\oposites\api\model\dto\response\TestIniciadoResponse.class
 com\oposites\api\controller\CalendarioController.class
 com\oposites\api\model\dto\response\EnviarMensajeResponse.class
 com\oposites\api\model\dto\response\ProgresoResumenResponse$ProgresoResumenResponseBuilder.class
+com\oposites\api\model\entity\RefreshToken.class
 com\oposites\api\controller\AdminTemaController.class
 com\oposites\api\model\entity\Usuario.class
 com\oposites\api\model\dto\response\RachaResponse$RachaResponseBuilder.class

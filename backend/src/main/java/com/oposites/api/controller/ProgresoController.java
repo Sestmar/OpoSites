@@ -5,6 +5,7 @@ import com.oposites.api.model.dto.response.ProgresoResumenResponse;
 import com.oposites.api.model.dto.response.ProgresoTemaResponse;
 import com.oposites.api.model.dto.response.RachaResponse;
 import com.oposites.api.service.ProgresoService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Progreso", description = "Estadísticas del usuario: resumen, temas débiles, evolución semanal y racha")
 @RestController
 @RequestMapping("/api/v1/progreso")
 @RequiredArgsConstructor

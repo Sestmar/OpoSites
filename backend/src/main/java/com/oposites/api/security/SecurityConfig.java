@@ -36,7 +36,11 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/actuator/health",
                                 "/login/oauth2/**",
-                                "/oauth2/**"
+                                "/oauth2/**",
+                                // Swagger UI — solo activo en dev (desactivado en prod vía yml)
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
                         // Lectura pública de oposiciones y temas (Fase 2)
                         // '*' en Spring Security AntMatcher coincide con UN solo segmento de ruta,

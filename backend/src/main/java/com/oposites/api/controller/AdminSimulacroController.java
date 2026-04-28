@@ -4,12 +4,14 @@ import com.oposites.api.model.dto.request.CreateSimulacroRequest;
 import com.oposites.api.model.dto.request.UpdateSimulacroRequest;
 import com.oposites.api.model.dto.response.SimulacroResponse;
 import com.oposites.api.service.SimulacroService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Simulacros", description = "Simulacros oficiales por oposición: inicio, entrega y resultados")
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor

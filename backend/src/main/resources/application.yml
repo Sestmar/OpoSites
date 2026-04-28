@@ -55,14 +55,33 @@ spring:
         enabled: false
 
 app:
+  rate-limit:
+    auth:
+      # Límites LAXOS para desarrollo local — no interferir en pruebas.
+      # En producción, application-prod.yml sobreescribe estos valores.
+      requests-per-minute: 20   # peticiones/minuto por IP
+      burst-capacity: 20        # pico instantáneo permitido
+
   jwt:
-    # En producción, usar una clave de mínimo 256 bits en Base64 desde variable de entorno
-    secret: ${JWT_SECRET:Y291cnNlTXlTZWNyZXRLZXlGb3JKV1RBdXRoZW50aWNhdGlvbkZhc2UxMjM0NTY=}
+    # DEV: el default es base64("dev-only-insecure-do-not-use-in-production") — 336 bits, válido para HS256.
+    # PROD: definir JWT_SECRET obligatoriamente. Generar con: openssl rand -base64 32
+    secret: ${JWT_SECRET:ZGV2LW9ubHktaW5zZWN1cmUtZG8tbm90LXVzZS1pbi1wcm9kdWN0aW9u}
     expiration-ms: 86400000        # 24 horas
     refresh-expiration-ms: 604800000  # 7 días
   cors:
     # Orígenes permitidos separados por coma; en prod poner solo el dominio del panel admin
     allowed-origins: "http://localhost:3000,http://localhost:4200"
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha          # tags ordenados alfabéticamente
+    operations-sorter: alpha    # métodos HTTP ordenados
+    display-request-duration: true
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
 
 management:
   endpoints:

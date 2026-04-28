@@ -4,12 +4,14 @@ import com.oposites.api.model.dto.request.CreateTemaRequest;
 import com.oposites.api.model.dto.request.UpdateTemaRequest;
 import com.oposites.api.model.dto.response.TemaResponse;
 import com.oposites.api.service.TemaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Temas", description = "Temas de estudio por oposición y sus preguntas")
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor

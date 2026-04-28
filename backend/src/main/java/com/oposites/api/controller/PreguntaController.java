@@ -3,10 +3,12 @@ package com.oposites.api.controller;
 import com.oposites.api.model.dto.response.PreguntaResponse;
 import com.oposites.api.model.dto.response.PreguntaRespuestaResponse;
 import com.oposites.api.service.PreguntaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Preguntas", description = "Consulta de preguntas individuales y sus respuestas correctas")
 @RestController
 @RequestMapping("/api/v1/preguntas")
 @RequiredArgsConstructor

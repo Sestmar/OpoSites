@@ -20,10 +20,23 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowedOrigins(Arrays.asList(allowedOriginsRaw.split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+
+        // Métodos necesarios para la API REST; PATCH incluido para actualizaciones parciales futuras
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+
+        // Headers explícitos — no usar "*" con allowCredentials=true (algunos proxies lo rechazan)
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
+
+        // Exponer Authorization para que clientes JS/Flutter puedan leerlo si es necesario
+        config.setExposedHeaders(List.of("Authorization"));
+
+        // Credenciales necesarias para enviar el header Authorization desde JS
         config.setAllowCredentials(true);
+
+        // Cache del preflight en el browser durante 1 hora — evita un OPTIONS por cada request
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

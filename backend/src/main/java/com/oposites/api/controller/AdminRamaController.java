@@ -4,12 +4,14 @@ import com.oposites.api.model.dto.request.CreateRamaOposicionRequest;
 import com.oposites.api.model.dto.request.UpdateRamaOposicionRequest;
 import com.oposites.api.model.dto.response.RamaResponse;
 import com.oposites.api.service.RamaOposicionService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Oposiciones", description = "Ramas de oposición disponibles y su catálogo de temas (públicos) y simulacros")
 @RestController
 @RequestMapping("/api/v1/admin/oposiciones")
 @RequiredArgsConstructor

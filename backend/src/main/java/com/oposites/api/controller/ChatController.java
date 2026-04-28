@@ -5,6 +5,7 @@ import com.oposites.api.model.dto.response.ConversacionResponse;
 import com.oposites.api.model.dto.response.EnviarMensajeResponse;
 import com.oposites.api.model.dto.response.MensajeResponse;
 import com.oposites.api.service.ChatIAService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Chat", description = "Chat IA con Gemini 2.0 Flash: conversaciones y mensajes por usuario")
 @RestController
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor

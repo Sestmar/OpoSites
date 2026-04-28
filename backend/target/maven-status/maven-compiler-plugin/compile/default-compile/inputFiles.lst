@@ -81,6 +81,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Pregunta.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\ProgresoUsuario.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\RamaOposicion.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\RefreshToken.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Simulacro.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Tema.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\TestSession.java
@@ -104,6 +105,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\PreguntaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\ProgresoUsuarioRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\RamaOposicionRepository.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\RefreshTokenRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\SimulacroRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\TemaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\TestSessionRepository.java

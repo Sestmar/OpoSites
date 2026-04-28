@@ -6,6 +6,7 @@ import com.oposites.api.model.dto.response.PreguntaResponse;
 import com.oposites.api.model.dto.response.ResultadoTestResponse;
 import com.oposites.api.model.dto.response.TestIniciadoResponse;
 import com.oposites.api.service.TestService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Tests", description = "Generación y resolución de tests de práctica; historial de fallos")
 @RestController
 @RequestMapping("/api/v1/tests")
 @RequiredArgsConstructor

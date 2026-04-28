@@ -5,12 +5,14 @@ import com.oposites.api.model.dto.response.TemaResponse;
 import com.oposites.api.model.enums.TipoPregunta;
 import com.oposites.api.service.PreguntaService;
 import com.oposites.api.service.TemaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Temas", description = "Temas de estudio por oposición y sus preguntas")
 @RestController
 @RequestMapping("/api/v1/temas")
 @RequiredArgsConstructor

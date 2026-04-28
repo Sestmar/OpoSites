@@ -1,5 +1,41 @@
-# Ignorar toda la documentación
+# ── Java / Maven ─────────────────────────────────────────────────────────────
+**/target/
+*.class
+
+# ── Secrets y entorno local ───────────────────────────────────────────────────
+# Nunca commitear .env con valores reales. Usar .env.example como plantilla.
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-secrets.yml
+
+# ── IDE / Editores ────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Flutter (frontend móvil) ──────────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+flutter/build/
+
+# ── Angular / Node (panel admin) ─────────────────────────────────────────────
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+
+# docs
 docs/
-*.pdf
-*.docx
+
+# Omitir archivos con extension .md
 *.md

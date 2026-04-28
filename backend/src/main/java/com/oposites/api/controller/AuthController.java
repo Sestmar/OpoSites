@@ -6,12 +6,14 @@ import com.oposites.api.model.dto.request.RefreshTokenRequest;
 import com.oposites.api.model.dto.request.RegisterRequest;
 import com.oposites.api.model.dto.response.AuthResponse;
 import com.oposites.api.service.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Auth", description = "Registro, login, OAuth2 con Google, refresh y logout")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -40,8 +42,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        authService.logout();
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request);
         return ResponseEntity.noContent().build();
     }
 }

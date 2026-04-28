@@ -6,6 +6,7 @@ import com.oposites.api.model.dto.response.TemaResponse;
 import com.oposites.api.service.RamaOposicionService;
 import com.oposites.api.service.SimulacroService;
 import com.oposites.api.service.TemaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
  * Endpoints públicos de ramas de oposición y sus temas.
  * Rutas GET marcadas como permitAll en SecurityConfig.
  */
+@Tag(name = "Oposiciones", description = "Ramas de oposición disponibles y su catálogo de temas (públicos) y simulacros")
 @RestController
 @RequestMapping("/api/v1/oposiciones")
 @RequiredArgsConstructor
