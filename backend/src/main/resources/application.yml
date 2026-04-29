@@ -71,6 +71,7 @@ app:
   cors:
     # Orígenes permitidos separados por coma; en prod poner solo el dominio del panel admin
     allowed-origins: "http://localhost:3000,http://localhost:4200"
+    allowed-origin-patterns: "http://localhost:*"
 
 springdoc:
   swagger-ui:

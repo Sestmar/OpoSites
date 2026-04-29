@@ -1,0 +1,75 @@
+/// Centraliza todas las URLs de la API de opoSites.
+///
+/// [baseUrl] apunta al emulador Android en dev (10.0.2.2 = localhost del host).
+/// Para iOS Simulator o web usar 'http://localhost:8080/api/v1'.
+/// Para producción reemplazar por el dominio real.
+///
+/// Los métodos estáticos construyen rutas con parámetros para evitar
+/// concatenaciones dispersas por el código.
+abstract final class ApiEndpoints {
+  // 10.0.2.2 = localhost del host para emulador Android.
+  // Para web/Windows desktop usar 'http://localhost:8080/api/v1'.
+  static const String baseUrl = 'http://localhost:8080/api/v1';
+
+  // ── 1. Auth ──────────────────────────────────────────────────────────────
+  static const String register    = '/auth/register';
+  static const String login       = '/auth/login';
+  static const String loginGoogle = '/auth/google';
+  static const String refresh     = '/auth/refresh';
+  static const String logout      = '/auth/logout';
+
+  // ── 2. Usuarios ──────────────────────────────────────────────────────────
+  static const String me     = '/usuarios/me';
+  static const String meRama = '/usuarios/me/rama';
+
+  // ── 3. Oposiciones ───────────────────────────────────────────────────────
+  static const String oposiciones = '/oposiciones';
+
+  static String oposicionDetalle(int id)       => '/oposiciones/$id';
+  static String oposicionTemas(int ramaId)     => '/oposiciones/$ramaId/temas';
+  static String oposicionSimulacros(int ramaId)=> '/oposiciones/$ramaId/simulacros';
+
+  // ── 4. Temas ─────────────────────────────────────────────────────────────
+  static String temaDetalle(int id)            => '/temas/$id';
+  static String temaPreguntas(int temaId)      => '/temas/$temaId/preguntas';
+
+  // ── 5. Preguntas ─────────────────────────────────────────────────────────
+  static String preguntaDetalle(int id)        => '/preguntas/$id';
+  static String preguntaRespuesta(int id)      => '/preguntas/$id/respuesta';
+
+  // ── 6. Tests ─────────────────────────────────────────────────────────────
+  static const String testsGenerar  = '/tests/generar';
+  static const String testsResponder = '/tests/responder';
+  static const String testsFallos   = '/tests/fallos';
+
+  // ── 7. Simulacros ────────────────────────────────────────────────────────
+  static String simulacroDetalle(int id)  => '/simulacros/$id';
+  static String simulacroIniciar(int id)  => '/simulacros/$id/iniciar';
+  static String simulacroEntregar(int id) => '/simulacros/$id/entregar';
+
+  // ── 8. Progreso ──────────────────────────────────────────────────────────
+  static const String progresoResumen  = '/progreso/resumen';
+  static const String progresoTemas    = '/progreso/temas';
+  static const String progresoEvolucion = '/progreso/evolucion';
+  static const String progresoRacha    = '/progreso/racha';
+
+  // ── 9. Plan de estudio ───────────────────────────────────────────────────
+  static const String planHoy           = '/plan/hoy';
+  static const String planConfiguracion = '/plan/configuracion';
+  static const String planGenerar       = '/plan/generar';
+  static String planTareaCompletar(int tareaId) => '/plan/tarea/$tareaId/completar';
+
+  // ── 10. Noticias ─────────────────────────────────────────────────────────
+  static const String noticias = '/noticias';
+  static String noticiaDetalle(int id) => '/noticias/$id';
+  static String noticiaLeer(int id)    => '/noticias/$id/leer';
+
+  // ── 11. Calendario ───────────────────────────────────────────────────────
+  static const String eventos = '/calendario/eventos';
+  static String eventoDetalle(int id) => '/calendario/eventos/$id';
+
+  // ── 12. Chat IA ──────────────────────────────────────────────────────────
+  static const String conversaciones = '/chat/conversaciones';
+  static String conversacionDetalle(int id)  => '/chat/conversaciones/$id';
+  static String conversacionMensajes(int id) => '/chat/conversaciones/$id/mensajes';
+}

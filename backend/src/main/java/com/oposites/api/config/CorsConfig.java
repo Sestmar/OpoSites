@@ -17,11 +17,19 @@ public class CorsConfig {
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOriginsRaw;
 
+    // Patrones con wildcard (p.ej. "http://localhost:*") — útil en dev para Flutter web
+    @Value("${app.cors.allowed-origin-patterns:}")
+    private String allowedOriginPatternsRaw;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(Arrays.asList(allowedOriginsRaw.split(",")));
+
+        if (!allowedOriginPatternsRaw.isBlank()) {
+            config.setAllowedOriginPatterns(Arrays.asList(allowedOriginPatternsRaw.split(",")));
+        }
 
         // Métodos necesarios para la API REST; PATCH incluido para actualizaciones parciales futuras
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

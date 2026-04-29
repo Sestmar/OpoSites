@@ -3,6 +3,8 @@ package com.oposites.api.model.entity;
 import com.oposites.api.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,6 +47,7 @@ public class Usuario {
     @Column(name = "fecha_examen_objetivo")
     private LocalDate fechaExamenObjetivo;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "plan_manual", columnDefinition = "jsonb")
     private String planManual;
 
