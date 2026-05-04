@@ -30,6 +30,10 @@ import '../../features/documentos/ui/conceptos_clave_screen.dart';
 import '../../features/documentos/ui/documento_detalle_screen.dart';
 import '../../features/documentos/ui/documentos_screen.dart';
 import '../../features/documentos/ui/flashcards_screen.dart';
+import '../../features/documentos/data/models/documento_test.dart';
+import '../../features/documentos/ui/documento_test_result_screen.dart';
+import '../../features/documentos/ui/documento_test_screen.dart';
+import '../../features/documentos/ui/mapa_mental_screen.dart';
 import '../../features/documentos/ui/resumen_screen.dart';
 import '../../features/tests/ui/test_active_screen.dart';
 import '../../features/tests/ui/test_config_screen.dart';
@@ -84,9 +88,12 @@ abstract final class AppRoutes {
   // ── Documentos sub-rutas ───────────────────────────────────────────────────
   static const documentos = '/documentos';
   static String documentoDetalle(int id)    => '/documentos/$id';
-  static String documentoFlashcards(int id) => '/documentos/$id/flashcards';
-  static String documentoResumen(int id)    => '/documentos/$id/resumen';
-  static String documentoConceptos(int id)  => '/documentos/$id/conceptos';
+  static String documentoFlashcards(int id)  => '/documentos/$id/flashcards';
+  static String documentoResumen(int id)     => '/documentos/$id/resumen';
+  static String documentoConceptos(int id)   => '/documentos/$id/conceptos';
+  static String documentoMapaMental(int id)  => '/documentos/$id/mapa-mental';
+  static String documentoTest(int id)        => '/documentos/$id/test';
+  static String documentoTestResultado(int id) => '/documentos/$id/test/resultado';
 }
 
 // ── Auth listenable ────────────────────────────────────────────────────────────
@@ -334,6 +341,38 @@ GoRouter appRouter(AppRouterRef ref) {
                           }
                           return ConceptosClaveScreen(material: extra);
                         },
+                      ),
+                      GoRoute(
+                        path: 'mapa-mental',
+                        builder: (_, state) {
+                          final extra = state.extra;
+                          if (extra is! MaterialGenerado) {
+                            return const _ExtraLostScreen();
+                          }
+                          return MapaMentalScreen(material: extra);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'test',
+                        builder: (_, state) {
+                          final extra = state.extra;
+                          if (extra is! DocumentoTest) {
+                            return const _ExtraLostScreen();
+                          }
+                          return DocumentoTestScreen(test: extra);
+                        },
+                        routes: [
+                          GoRoute(
+                            path: 'resultado',
+                            builder: (_, state) {
+                              final extra = state.extra;
+                              if (extra is! DocumentoTestSesion) {
+                                return const _ExtraLostScreen();
+                              }
+                              return DocumentoTestResultScreen(sesion: extra);
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),

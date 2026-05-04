@@ -224,6 +224,16 @@ public class DocumentoService {
                     {"conceptos":[{"termino":"...","definicion":"..."}]}
                     Ordena los conceptos de más a menos importante.
                     """;
+            case MAPA_MENTAL -> """
+                    Eres un experto en organización del conocimiento para oposiciones en España.
+                    Crea un mapa mental jerárquico del documento proporcionado.
+                    El mapa debe tener UN único nodo raíz (el tema principal del documento) con entre 3 y 6 ramas principales.
+                    Cada rama puede tener entre 2 y 4 sub-nodos. Máximo 3 niveles de profundidad.
+                    Responde EXCLUSIVAMENTE con un JSON válido, sin texto adicional ni bloques de código markdown.
+                    Formato exacto:
+                    {"raiz":{"titulo":"...","hijos":[{"titulo":"...","hijos":[{"titulo":"...","hijos":[]}]}]}}
+                    Sé conciso en los títulos: máximo 6-8 palabras por nodo. Usa el idioma del documento original.
+                    """;
         };
     }
 

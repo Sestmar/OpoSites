@@ -58,6 +58,7 @@ com\oposites\api\security\ratelimit\RateLimitProperties.class
 com\oposites\api\controller\ProgresoController.class
 com\oposites\api\model\dto\response\DocumentoResponse.class
 com\oposites\api\model\dto\request\UpdateRamaOposicionRequest.class
+com\oposites\api\service\DocumentoTestService.class
 com\oposites\api\model\plan\PlanConfiguracion.class
 com\oposites\api\repository\ProgresoUsuarioRepository.class
 com\oposites\api\controller\TestController.class
@@ -69,9 +70,11 @@ com\oposites\api\service\TestService.class
 com\oposites\api\model\dto\response\UsuarioResponse.class
 com\oposites\api\model\enums\Role.class
 com\oposites\api\service\TokenService.class
+com\oposites\api\model\entity\DocumentoTestPregunta.class
 com\oposites\api\model\entity\MaterialGenerado$MaterialGeneradoBuilder.class
 com\oposites\api\model\entity\TestSession.class
 com\oposites\api\model\dto\response\RachaResponse.class
+com\oposites\api\model\entity\DocumentoTestPregunta$DocumentoTestPreguntaBuilder.class
 com\oposites\api\model\dto\response\PlanTareaResponse$PlanTareaResponseBuilder.class
 com\oposites\api\model\dto\request\LoginRequest.class
 com\oposites\api\service\FileStorageService.class
@@ -84,6 +87,7 @@ com\oposites\api\model\entity\Usuario.class
 com\oposites\api\model\converter\JsonStringListConverter$1.class
 com\oposites\api\model\dto\request\ResponderTestRequest.class
 com\oposites\api\model\dto\response\NoticiaResumenResponse.class
+com\oposites\api\model\dto\response\DocumentoTestPreguntaResponse.class
 com\oposites\api\controller\AdminNoticiaController.class
 com\oposites\api\repository\CalendarioEventoRepository.class
 com\oposites\api\service\CalendarioService.class
@@ -100,6 +104,7 @@ com\oposites\api\service\ChatIAService.class
 com\oposites\api\security\JwtProperties.class
 com\oposites\api\model\dto\response\NoticiaResponse.class
 com\oposites\api\controller\AdminRamaController.class
+com\oposites\api\model\entity\DocumentoTest.class
 com\oposites\api\model\dto\response\PreguntaResponse.class
 com\oposites\api\model\dto\request\UpdateRamaRequest.class
 com\oposites\api\model\entity\Pregunta.class
@@ -110,6 +115,7 @@ com\oposites\api\model\entity\NoticiaConvocatoria.class
 com\oposites\api\model\converter\JsonStringListConverter.class
 com\oposites\api\model\dto\response\PlanTareaResponse.class
 com\oposites\api\model\dto\request\CreateTemaRequest.class
+com\oposites\api\repository\DocumentoTestRepository.class
 com\oposites\api\model\enums\TipoEvento.class
 com\oposites\api\model\converter\JsonLongListConverter$1.class
 com\oposites\api\model\enums\PreferenciaPlan.class
@@ -146,6 +152,7 @@ com\oposites\api\repository\TemaRepository.class
 com\oposites\api\model\dto\request\UpdateNoticiaRequest.class
 com\oposites\api\repository\TestSessionRepository.class
 com\oposites\api\controller\AuthController.class
+com\oposites\api\model\dto\response\DocumentoTestResponse.class
 com\oposites\api\model\dto\request\CreateSimulacroRequest.class
 com\oposites\api\repository\DocumentoRepository.class
 com\oposites\api\model\enums\TipoPregunta.class
@@ -171,19 +178,23 @@ com\oposites\api\model\dto\response\MensajeResponse$MensajeResponseBuilder.class
 com\oposites\api\model\entity\CalendarioEvento$CalendarioEventoBuilder.class
 com\oposites\api\service\PreguntaService.class
 com\oposites\api\model\dto\request\UpdatePlanConfiguracionRequest.class
+com\oposites\api\model\dto\response\DocumentoTestResponse$DocumentoTestResponseBuilder.class
 com\oposites\api\model\entity\RefreshToken$RefreshTokenBuilder.class
 com\oposites\api\controller\PreguntaController.class
 com\oposites\api\model\dto\response\TemaResponse.class
 com\oposites\api\model\dto\response\TestIniciadoResponse.class
 com\oposites\api\security\ratelimit\AuthRateLimitFilter.class
+com\oposites\api\model\dto\response\DocumentoTestPreguntaResponse$DocumentoTestPreguntaResponseBuilder.class
 com\oposites\api\model\dto\response\EnviarMensajeResponse.class
 com\oposites\api\model\entity\MaterialGenerado.class
 com\oposites\api\model\entity\RefreshToken.class
 com\oposites\api\model\dto\response\RachaResponse$RachaResponseBuilder.class
+com\oposites\api\model\entity\DocumentoTest$DocumentoTestBuilder.class
 com\oposites\api\model\dto\request\RespuestaDto.class
 com\oposites\api\controller\TemaController.class
 com\oposites\api\model\dto\request\CreatePreguntaRequest.class
 com\oposites\api\model\dto\response\TemaDebilDto.class
+com\oposites\api\controller\DocumentoTestController.class
 com\oposites\api\model\enums\EstadoSession.class
 com\oposites\api\model\dto\request\CreateNoticiaRequest.class
 com\oposites\api\model\dto\request\UpdateSimulacroRequest.class

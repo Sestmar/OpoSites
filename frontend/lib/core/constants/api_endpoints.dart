@@ -82,4 +82,10 @@ abstract final class ApiEndpoints {
   static String documentoEliminar(int id)     => '/documentos/$id';
   static String documentoGenerar(int id)      => '/documentos/$id/generar';
   static String documentoMateriales(int id)   => '/documentos/$id/materiales';
+
+  // ── 14. Tests desde documento ─────────────────────────────────────────────
+  static String documentoTestGenerar(int id) => '/documentos/$id/test/generar';
+  static String documentoTestUltimo(int id)  => '/documentos/$id/test/ultimo';
+  static String documentoTestPorId(int docId, int testId) =>
+      '/documentos/$docId/test/$testId';
 }

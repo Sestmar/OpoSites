@@ -10,7 +10,9 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/pressable.dart';
 import '../data/models/documento.dart';
+import '../data/models/documento_test.dart';
 import '../data/models/material_generado.dart';
+import '../providers/documento_test_provider.dart';
 import '../providers/documentos_provider.dart';
 
 class DocumentoDetalleScreen extends ConsumerStatefulWidget {
@@ -31,6 +33,81 @@ class DocumentoDetalleScreen extends ConsumerStatefulWidget {
 class _DocumentoDetalleScreenState
     extends ConsumerState<DocumentoDetalleScreen> {
   TipoMaterial? _generando;
+  bool _generandoTest = false;
+
+  Future<void> _generarTest() async {
+    if (_generandoTest || _generando != null) return;
+
+    // ── Chequeo de test existente (repository directo — sin tocar el estado) ──
+    final repo = ref.read(documentoTestRepositoryProvider);
+    DocumentoTest? existente;
+    try {
+      existente = await repo.obtenerUltimo(widget.docId);
+    } catch (e) {
+      // Cualquier error que no sea 404 (el 404 ya se maneja en el repo → null)
+      if (!mounted) return;
+      _showError(_msgError(e));
+      return;
+    }
+
+    if (existente != null) {
+      if (!mounted) return;
+      final accion = await _mostrarDialogoTest(existente);
+      if (accion == _AccionTest.abrir) {
+        if (mounted) {
+          context.push(AppRoutes.documentoTest(widget.docId), extra: existente);
+        }
+        return;
+      }
+      if (accion != _AccionTest.regenerar) return; // canceló
+    }
+
+    // ── Generación ───────────────────────────────────────────────────────────
+    setState(() => _generandoTest = true);
+    try {
+      final test = await ref
+          .read(documentoTestProvider(widget.docId).notifier)
+          .generar();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Test generado correctamente')),
+      );
+      context.push(AppRoutes.documentoTest(widget.docId), extra: test);
+    } catch (e) {
+      if (!mounted) return;
+      _showError(_msgError(e));
+    } finally {
+      if (mounted) setState(() => _generandoTest = false);
+    }
+  }
+
+  Future<_AccionTest?> _mostrarDialogoTest(DocumentoTest existente) {
+    return showDialog<_AccionTest>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ya existe un test'),
+        content: Text(
+          'Este documento ya tiene un test generado el ${existente.fechaFormateada}. '
+          '¿Querés abrirlo o regenerarlo?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(null),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => ctx.pop(_AccionTest.abrir),
+            child: const Text('Ver existente'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+            onPressed: () => ctx.pop(_AccionTest.regenerar),
+            child: const Text('Regenerar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _generar(TipoMaterial tipo) async {
     if (_generando != null) return;
@@ -117,6 +194,9 @@ class _DocumentoDetalleScreenState
       case TipoMaterial.conceptosClave:
         context.push(AppRoutes.documentoConceptos(widget.docId),
             extra: material);
+      case TipoMaterial.mapaMental:
+        context.push(AppRoutes.documentoMapaMental(widget.docId),
+            extra: material);
     }
   }
 
@@ -172,6 +252,30 @@ class _DocumentoDetalleScreenState
           ),
           const SizedBox(height: 24),
 
+          // ── Test desde documento ────────────────────────────────────────────
+          Text('TEST DE PRÁCTICA',
+              style: AppText.label.copyWith(
+                  color: AppColors.textMutedFor(b))),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: (!doc.textoDisponible || _generandoTest || _generando != null)
+                ? null
+                : _generarTest,
+            icon: _generandoTest
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.quiz_outlined),
+            label: Text(_generandoTest ? 'Generando…' : 'Test desde documento'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+              alignment: Alignment.centerLeft,
+            ),
+          ),
+          const SizedBox(height: 24),
+
           // ── Materiales ya generados ────────────────────────────────────────
           Text('MATERIALES GENERADOS',
               style: AppText.label.copyWith(
@@ -214,6 +318,8 @@ class _DocumentoDetalleScreenState
 // ── Enum interno para la acción de duplicado ───────────────────────────────────
 
 enum _AccionDuplicado { abrir, regenerar }
+
+enum _AccionTest { abrir, regenerar }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -401,6 +507,7 @@ class _AccionesGeneracion extends StatelessWidget {
         TipoMaterial.flashcards => Icons.style_outlined,
         TipoMaterial.resumen => Icons.summarize_outlined,
         TipoMaterial.conceptosClave => Icons.label_outline,
+        TipoMaterial.mapaMental => Icons.account_tree_outlined,
       };
 }
 
@@ -462,11 +569,13 @@ class _MaterialTile extends StatelessWidget {
         TipoMaterial.flashcards => Icons.style_outlined,
         TipoMaterial.resumen => Icons.summarize_outlined,
         TipoMaterial.conceptosClave => Icons.label_outline,
+        TipoMaterial.mapaMental => Icons.account_tree_outlined,
       };
 
   Color _colorTipo(TipoMaterial tipo, Brightness b) => switch (tipo) {
         TipoMaterial.flashcards => AppColors.accentRoseSoftFor(b),
         TipoMaterial.resumen => AppColors.primaryFor(b),
         TipoMaterial.conceptosClave => AppColors.accentWarmSoftFor(b),
+        TipoMaterial.mapaMental => AppColors.accentMintSoftFor(b),
       };
 }
