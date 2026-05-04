@@ -3,37 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
-import '../../auth/providers/auth_provider.dart';
 
 /// Pantalla del tab "Más".
 ///
 /// Punto de acceso a todas las funcionalidades secundarias:
-/// Noticias, Calendario, Plan de estudio, Configuración y (próximamente) Chat IA.
+/// Noticias, Calendario, Plan de estudio, Chat IA y Perfil.
+/// El logout se gestiona desde la pantalla de Perfil.
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isLoggingOut = ref.watch(authProvider) is AuthLoading;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Más'),
-        actions: [
-          IconButton(
-            icon: isLoggingOut
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.logout_outlined),
-            tooltip: 'Cerrar sesión',
-            onPressed: isLoggingOut
-                ? null
-                : () => ref.read(authProvider.notifier).logout(),
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -86,6 +69,25 @@ class MoreScreen extends ConsumerWidget {
             titulo: 'Chat IA',
             subtitulo: 'Consulta dudas con inteligencia artificial',
             onTap: () => context.push(AppRoutes.chat),
+          ),
+          _MoreTile(
+            icon: Icons.auto_stories_outlined,
+            color: Colors.deepPurple,
+            titulo: 'Mis documentos',
+            subtitulo: 'Sube tu temario y genera flashcards, resúmenes y más',
+            onTap: () => context.push(AppRoutes.documentos),
+          ),
+
+          const Divider(indent: 16, endIndent: 16),
+
+          // ── Cuenta ────────────────────────────────────────────────────────
+          _SectionHeader('Cuenta'),
+          _MoreTile(
+            icon: Icons.person_outline,
+            color: Colors.indigo,
+            titulo: 'Mi perfil',
+            subtitulo: 'Foto, datos personales y cerrar sesión',
+            onTap: () => context.push(AppRoutes.perfil),
           ),
         ],
       ),

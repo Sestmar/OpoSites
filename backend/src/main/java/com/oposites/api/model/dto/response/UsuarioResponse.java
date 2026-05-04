@@ -16,6 +16,8 @@ public class UsuarioResponse {
     private String nombre;
     private String ciudad;
     private Long ramaPrincipalId;
+    private String nombreRama;
+    private String fotoPerfilUrl;
     private LocalDate fechaExamenObjetivo;
     private boolean enabledChatPrivate;
     private Role role;

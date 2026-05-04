@@ -6,6 +6,7 @@ import '../../../core/storage/secure_storage.dart';
 import 'models/auth_response.dart';
 import 'models/login_request.dart';
 import 'models/register_request.dart';
+import 'models/usuario_me.dart';
 
 /// Único punto de acceso a los endpoints /auth/**.
 ///
@@ -71,6 +72,15 @@ class AuthRepository {
           data: {'refreshToken': refreshToken},
         ),
       );
+
+  Future<UsuarioMe> getMe() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(ApiEndpoints.me);
+      return UsuarioMe.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    }
+  }
 
   /// Revoca el refresh token en el servidor y limpia el almacenamiento local.
   /// Garantiza limpieza local aunque el servidor no responda.

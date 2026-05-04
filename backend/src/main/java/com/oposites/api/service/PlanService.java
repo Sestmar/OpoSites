@@ -3,6 +3,7 @@ package com.oposites.api.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oposites.api.exception.AppException;
+import com.oposites.api.model.dto.request.CreatePlanTareaRequest;
 import com.oposites.api.model.dto.request.UpdatePlanConfiguracionRequest;
 import com.oposites.api.model.dto.response.PlanConfiguracionResponse;
 import com.oposites.api.model.dto.response.PlanHoyResponse;
@@ -96,6 +97,36 @@ public class PlanService {
 
         List<PlanTarea> tareas = planTareaRepository.findByUsuarioIdAndFechaOrderByCreatedAtAsc(usuario.getId(), hoy);
         return toPlanHoyResponse(hoy, tareas);
+    }
+
+    @Transactional
+    public PlanTareaResponse crearTareaManual(String email, CreatePlanTareaRequest request) {
+        Usuario usuario = findUsuario(email);
+        LocalDate hoy = LocalDate.now();
+
+        PlanTarea tarea = PlanTarea.builder()
+                .usuario(usuario)
+                .tipo(request.getTipo())
+                .fecha(hoy)
+                .manual(true)
+                .descripcion(request.getDescripcion())
+                .build();
+
+        return toTareaResponse(planTareaRepository.save(tarea));
+    }
+
+    @Transactional
+    public void eliminarTarea(Long tareaId, String email) {
+        PlanTarea tarea = planTareaRepository
+                .findByIdAndUsuarioId(tareaId, findUsuario(email).getId())
+                .orElseThrow(() -> new AppException("Tarea no encontrada", HttpStatus.NOT_FOUND));
+
+        if (tarea.isCompletada()) {
+            throw new AppException(
+                    "No se puede eliminar una tarea ya completada", HttpStatus.CONFLICT);
+        }
+
+        planTareaRepository.delete(tarea);
     }
 
     @Transactional
@@ -285,10 +316,15 @@ public class PlanService {
                 .fecha(t.getFecha())
                 .completada(t.isCompletada())
                 .descripcion(generarDescripcion(t))
+                .manual(t.isManual())
                 .build();
     }
 
     private String generarDescripcion(PlanTarea t) {
+        // Las tareas manuales usan su descripción guardada si la tienen
+        if (t.getDescripcion() != null && !t.getDescripcion().isBlank()) {
+            return t.getDescripcion();
+        }
         return switch (t.getTipo()) {
             case TEST -> t.getTema() != null
                     ? "Haz un test de 10 preguntas sobre " + t.getTema().getNombre()

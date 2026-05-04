@@ -1,5 +1,9 @@
 package com.oposites.api.model.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum PreferenciaPlan {
-    TEORIA, TEST, MIXTO
+    @JsonProperty("teoria")  TEORIA,
+    @JsonProperty("test")    TEST,
+    @JsonProperty("mixto")   MIXTO
 }

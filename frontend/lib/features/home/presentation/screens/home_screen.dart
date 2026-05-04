@@ -1,138 +1,361 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../auth/providers/usuario_provider.dart';
+import '../../../plan/providers/plan_provider.dart';
+import '../../../progreso/data/models/progreso_resumen.dart';
 import '../../../progreso/providers/progreso_provider.dart';
+import '../../../progreso/data/models/racha.dart';
+import '../../ui/widgets/ai_suggestion_card.dart';
+import '../../ui/widgets/continue_card.dart';
+import '../../ui/widgets/greeting_section.dart';
+import '../../ui/widgets/home_header.dart';
+import '../../ui/widgets/plan_today_card.dart';
+import '../../ui/widgets/quick_access_grid.dart';
+import '../../ui/widgets/quiet_list_section.dart';
+import '../../ui/widgets/stat_tile.dart';
 
-/// Pantalla de inicio — dashboard principal de la app.
-///
-/// Muestra un resumen rápido del estado del usuario y accesos directos
-/// a los flujos más usados. No fuerza carga de providers: si los datos
-/// ya están en memoria (de una visita previa a Progreso), se muestran;
-/// si no, los accesos rápidos funcionan igual sin datos de racha/plan.
-class HomeScreen extends ConsumerWidget {
+/// Pantalla de inicio — dashboard principal rediseñado (Bloques 2, 3 y 4).
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Racha: solo se muestra si el provider ya tiene datos (keepAlive).
-    // No se llama a .load() desde Home — el usuario va a Progreso para eso.
-    final rachaState = ref.watch(rachaNotifierProvider);
-    final racha = rachaState.valueOrNull;
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _scrollController = ScrollController();
+  bool _headerBlurred = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    Future.microtask(() {
+      ref.read(planHoyNotifierProvider.notifier).load();
+      ref.read(rachaNotifierProvider.notifier).load();
+      ref.read(progresoResumenNotifierProvider.notifier).load();
+    });
+  }
+
+  void _onScroll() {
+    final shouldBlur = _scrollController.offset > 40;
+    if (shouldBlur != _headerBlurred) {
+      setState(() => _headerBlurred = shouldBlur);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+
+    final planState = ref.watch(planHoyNotifierProvider);
+    final racha = ref.watch(rachaNotifierProvider).valueOrNull;
+    final resumen = ref.watch(progresoResumenNotifierProvider).valueOrNull;
+    final userAsync = ref.watch(currentUserProvider);
+
+    final diasHastaExamen = _diasHastaExamen(
+      userAsync.valueOrNull?.fechaExamenObjetivo,
+    );
+    final aiSuggestion = _buildAiSuggestion(resumen, racha);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('opoSites'),
-        centerTitle: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          // ── Encabezado ─────────────────────────────────────────────────────
-          Text(
-            '¡A estudiar!',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Accede a tus herramientas de estudio.',
-            style: TextStyle(color: Colors.grey.shade600),
-          ),
-
-          // ── Racha (si disponible) ──────────────────────────────────────────
-          if (racha != null) ...[
-            const SizedBox(height: 16),
-            _RachaCard(
-              rachaActual: racha.rachaActual,
-              mejorRacha: racha.mejorRacha,
+      backgroundColor: AppColors.bgFor(b),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // ── Header sticky ────────────────────────────────────────────────
+          SliverAppBar(
+            pinned: true,
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            toolbarHeight: 56,
+            titleSpacing: 16,
+            flexibleSpace: _HeaderBlurBackground(
+              isBlurred: _headerBlurred,
+              brightness: b,
             ),
-          ],
-
-          const SizedBox(height: 24),
-
-          // ── Accesos rápidos ────────────────────────────────────────────────
-          Text(
-            'Acceso rápido',
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.4,
-            children: [
-              _QuickAccessCard(
-                icon: Icons.quiz_outlined,
-                color: Colors.blue,
-                label: 'Test rápido',
-                onTap: () => context.push(AppRoutes.practicarTests),
-              ),
-              _QuickAccessCard(
-                icon: Icons.assignment_outlined,
-                color: Colors.deepOrange,
-                label: 'Simulacros',
-                onTap: () => context.push(AppRoutes.practicarSimulacros),
-              ),
-              _QuickAccessCard(
-                icon: Icons.today_outlined,
-                color: Colors.orange,
-                label: 'Plan de hoy',
-                onTap: () => context.push(AppRoutes.planHoy),
-              ),
-              _QuickAccessCard(
-                icon: Icons.newspaper_outlined,
-                color: Colors.deepPurple,
-                label: 'Noticias',
-                onTap: () => context.push(AppRoutes.noticias),
-              ),
-            ],
+            title: HomeHeader(rachaActual: racha?.rachaActual ?? 0),
           ),
 
-          const SizedBox(height: 24),
+          // ── Contenido ────────────────────────────────────────────────────
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate.fixed([
 
-          // ── Secundario ─────────────────────────────────────────────────────
-          Text(
-            'También disponible',
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
+                // Greeting
+                const GreetingSection(),
+                const SizedBox(height: 20),
 
-          _SecondaryTile(
-            icon: Icons.calendar_month_outlined,
-            color: Colors.green,
-            label: 'Calendario',
-            onTap: () => context.push(AppRoutes.calendario),
+                // Card "Continuar"
+                ContinueCard(
+                  planState: planState,
+                  onTap: () => context.push(AppRoutes.planHoy),
+                  onRetry: () =>
+                      ref.read(planHoyNotifierProvider.notifier).load(),
+                ),
+                const SizedBox(height: 12),
+
+                // Stats row (racha · aciertos · días)
+                _StatsRow(
+                  racha: racha?.rachaActual,
+                  porcentajeAciertos: resumen?.porcentajeAciertosGlobal,
+                  diasHastaExamen: diasHastaExamen,
+                  onTapProgreso: () => context.go(AppRoutes.progreso),
+                ),
+                const SizedBox(height: 12),
+
+                // Plan de hoy (timeline)
+                _PlanSection(planState: planState),
+                const SizedBox(height: 12),
+
+                // Sugerido por IA
+                AiSuggestionCard(
+                  suggestion: aiSuggestion,
+                  onTap: () => _onAiCardTap(context, resumen),
+                ),
+                const SizedBox(height: 20),
+
+                // Accesos rápidos
+                QuickAccessGrid(
+                  onTestRapido: () =>
+                      context.push(AppRoutes.practicarTests),
+                  onSimulacro: () =>
+                      context.push(AppRoutes.practicarSimulacros),
+                  onPorTemas: () => context.go(AppRoutes.practicar),
+                  onMisFallos: () => context.push(AppRoutes.testFallos),
+                ),
+                const SizedBox(height: 24),
+
+                // También disponible
+                QuietListSection(
+                  onCalendario: () => context.push(AppRoutes.calendario),
+                  onNoticias: () => context.push(AppRoutes.noticias),
+                  onChat: () => context.push(AppRoutes.chat),
+                ),
+              ]),
+            ),
           ),
-          _SecondaryTile(
-            icon: Icons.bar_chart_outlined,
-            color: Colors.teal,
-            label: 'Mi progreso',
-            onTap: () => context.go(AppRoutes.progreso),
+        ],
+      ),
+    );
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  /// Calcula los días hasta la fecha de examen. Devuelve null si no hay fecha
+  /// configurada o ya pasó.
+  static int? _diasHastaExamen(String? fechaStr) {
+    if (fechaStr == null) return null;
+    try {
+      final fecha = DateTime.parse(fechaStr);
+      final hoy = DateTime.now();
+      final diff =
+          fecha.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+      return diff >= 0 ? diff : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Deriva la sugerencia de la IA a partir de datos reales:
+  ///   1. Tema débil más prioritario (menor % de acierto con suficientes respuestas)
+  ///   2. Mensaje motivacional si hay racha activa
+  ///   3. Mensaje genérico de inicio
+  static String _buildAiSuggestion(
+    ProgresoResumen? resumen,
+    Racha? racha,
+  ) {
+    if (resumen != null && resumen.temasDebiles.isNotEmpty) {
+      final tema = resumen.temasDebiles.first;
+      final pct = tema.porcentajeAcierto.round();
+      return 'Repasa ${tema.nombre} — tienes un $pct% de aciertos';
+    }
+    if (racha != null && racha.rachaActual > 1) {
+      return '¡Llevas ${racha.rachaActual} días de racha! Sigue con el plan de hoy.';
+    }
+    return 'Empieza un test para detectar tus puntos débiles.';
+  }
+
+  /// Navega a la acción más relevante según la sugerencia de la IA.
+  void _onAiCardTap(BuildContext context, ProgresoResumen? resumen) {
+    if (resumen != null && resumen.temasDebiles.isNotEmpty) {
+      // Hay tema débil → ir a Tests para practicarlo
+      context.push(AppRoutes.practicarTests);
+    } else {
+      // Sin datos suficientes → ir a Progreso para ver el estado
+      context.go(AppRoutes.progreso);
+    }
+  }
+}
+
+// ── Stats row ─────────────────────────────────────────────────────────────────
+
+class _StatsRow extends StatelessWidget {
+  final int? racha;
+  final double? porcentajeAciertos;
+  final int? diasHastaExamen;
+  final VoidCallback? onTapProgreso;
+
+  const _StatsRow({
+    this.racha,
+    this.porcentajeAciertos,
+    this.diasHastaExamen,
+    this.onTapProgreso,
+  });
+
+  Color _diasColor(int? dias) {
+    if (dias == null) return AppColors.accentWarm;
+    if (dias > 90) return AppColors.accentMint;
+    if (dias > 30) return AppColors.accentWarm;
+    return AppColors.accentRose;
+  }
+
+  Color _diasBgColor(int? dias, Brightness b) {
+    if (dias == null) return AppColors.accentWarmSoftFor(b);
+    if (dias > 90) return AppColors.accentMintSoftFor(b);
+    if (dias > 30) return AppColors.accentWarmSoftFor(b);
+    return AppColors.accentRoseSoftFor(b);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+    final pct = porcentajeAciertos;
+    final diasColor = _diasColor(diasHastaExamen);
+    final diasBg = _diasBgColor(diasHastaExamen, b);
+
+    return Row(
+      children: [
+        Expanded(
+          child: StatTile(
+            icon: Icons.local_fire_department,
+            iconColor: AppColors.accentWarm,
+            iconBgColor: AppColors.accentWarmSoftFor(b),
+            value: racha != null ? '$racha' : '—',
+            label: 'días seguidos',
+            valueColor: AppColors.accentWarm,
           ),
-          _SecondaryTile(
-            icon: Icons.warning_amber_outlined,
-            color: Colors.amber,
-            label: 'Mis fallos',
-            onTap: () => context.push(AppRoutes.testFallos),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: StatTile(
+            icon: Icons.trending_up,
+            iconColor: AppColors.accentMint,
+            iconBgColor: AppColors.accentMintSoftFor(b),
+            value: pct != null ? '${pct.round()}%' : '—',
+            label: 'aciertos',
+            valueColor: pct != null ? AppColors.accentMint : null,
+            onTap: onTapProgreso,
           ),
-          _SecondaryTile(
-            icon: Icons.smart_toy_outlined,
-            color: Colors.blueGrey,
-            label: 'Chat IA',
-            onTap: () => context.push(AppRoutes.chat),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: StatTile(
+            icon: Icons.calendar_today,
+            iconColor: diasColor,
+            iconBgColor: diasBg,
+            value: diasHastaExamen != null ? '$diasHastaExamen' : '—',
+            label: 'al examen',
+            valueColor: diasHastaExamen != null ? diasColor : null,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Sección plan de hoy ───────────────────────────────────────────────────────
+
+class _PlanSection extends StatelessWidget {
+  final AsyncValue planState;
+
+  const _PlanSection({required this.planState});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+
+    return planState.when(
+      loading: () => _PlanLoadingCard(brightness: b),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (plan) {
+        if (plan == null || plan.totalTareas == 0) {
+          return _PlanEmptyCard(brightness: b);
+        }
+        return PlanTodayCard(plan: plan);
+      },
+    );
+  }
+}
+
+class _PlanLoadingCard extends StatelessWidget {
+  final Brightness brightness;
+  const _PlanLoadingCard({required this.brightness});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceFor(brightness),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderFor(brightness), width: 0.5),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primaryFor(brightness),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlanEmptyCard extends StatelessWidget {
+  final Brightness brightness;
+  const _PlanEmptyCard({required this.brightness});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceFor(brightness),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderFor(brightness), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline,
+              color: AppColors.accentMint, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Sin plan para hoy · configura uno en Plan',
+              style: AppText.body
+                  .copyWith(color: AppColors.textMutedFor(brightness)),
+            ),
           ),
         ],
       ),
@@ -140,90 +363,37 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Widget de racha ────────────────────────────────────────────────────────────
+// ── Fondo del header con blur ─────────────────────────────────────────────────
 
-class _RachaCard extends StatelessWidget {
-  const _RachaCard({
-    required this.rachaActual,
-    required this.mejorRacha,
+class _HeaderBlurBackground extends StatelessWidget {
+  final bool isBlurred;
+  final Brightness brightness;
+
+  const _HeaderBlurBackground({
+    required this.isBlurred,
+    required this.brightness,
   });
-
-  final int rachaActual;
-  final int mejorRacha;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            const Icon(Icons.local_fire_department, color: Colors.orange, size: 28),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$rachaActual días de racha',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  'Mejor racha: $mejorRacha días',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    if (!isBlurred) return const SizedBox.expand();
 
-// ── Grid de acceso rápido ──────────────────────────────────────────────────────
+    final bgColor = brightness == Brightness.dark
+        ? AppColors.darkBg.withOpacity(0.85)
+        : AppColors.lightBg.withOpacity(0.85);
 
-class _QuickAccessCard extends StatelessWidget {
-  const _QuickAccessCard({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.borderFor(brightness),
+                width: 0.5,
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -231,37 +401,3 @@ class _QuickAccessCard extends StatelessWidget {
   }
 }
 
-// ── Lista secundaria ───────────────────────────────────────────────────────────
-
-class _SecondaryTile extends StatelessWidget {
-  const _SecondaryTile({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-      onTap: onTap,
-    );
-  }
-}

@@ -98,16 +98,22 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
-        <!-- ===== IA: Spring AI + Gemini vía OpenAI-compatible endpoint ===== -->
+        <!-- ===== IA: Spring AI + Gemini vía Google AI Studio (nativo) ===== -->
         <!--
-            Nombre correcto en Spring AI 1.0.0: spring-ai-starter-model-openai (renombrado desde 1.0.0-Mx).
-            Usamos el starter de OpenAI porque Gemini expone un endpoint compatible 1:1.
-            Base-url y api-key se configuran en application.yml apuntando a generativelanguage.googleapis.com.
+            Starter nativo de Google AI (Gemini). Usa la API key de AI Studio directamente.
+            Evita el endpoint OpenAI-compatible que tiene quota = 0 en el free tier EU.
             Para cambiar de proveedor: cambiar este starter + application.yml. ChatIAService no requiere cambios.
         -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+
+        <!-- ===== Extracción de texto (documentos) ===== -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- ===== Documentación OpenAPI ===== -->

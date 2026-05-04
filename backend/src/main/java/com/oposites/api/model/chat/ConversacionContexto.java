@@ -25,4 +25,7 @@ public class ConversacionContexto {
 
     // Nombres de los top-3 temas más débiles del usuario
     private List<String> temasDebiles;
+
+    // Convocatorias y noticias recientes de la rama del usuario (inyectadas en el system prompt)
+    private List<String> convocatorias;
 }

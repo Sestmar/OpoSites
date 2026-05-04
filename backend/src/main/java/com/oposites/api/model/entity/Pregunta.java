@@ -1,9 +1,10 @@
 package com.oposites.api.model.entity;
 
-import com.oposites.api.model.converter.JsonStringListConverter;
 import com.oposites.api.model.enums.TipoPregunta;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,7 +34,7 @@ public class Pregunta {
     private TipoPregunta tipo;
 
     // Lista de opciones almacenada como JSONB en PostgreSQL
-    @Convert(converter = JsonStringListConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private List<String> opciones;
 

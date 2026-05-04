@@ -19,8 +19,9 @@ abstract final class ApiEndpoints {
   static const String logout      = '/auth/logout';
 
   // ── 2. Usuarios ──────────────────────────────────────────────────────────
-  static const String me     = '/usuarios/me';
-  static const String meRama = '/usuarios/me/rama';
+  static const String me      = '/usuarios/me';
+  static const String meRama  = '/usuarios/me/rama';
+  static const String meFoto  = '/usuarios/me/foto';
 
   // ── 3. Oposiciones ───────────────────────────────────────────────────────
   static const String oposiciones = '/oposiciones';
@@ -57,7 +58,9 @@ abstract final class ApiEndpoints {
   static const String planHoy           = '/plan/hoy';
   static const String planConfiguracion = '/plan/configuracion';
   static const String planGenerar       = '/plan/generar';
+  static const String planTarea         = '/plan/tarea';
   static String planTareaCompletar(int tareaId) => '/plan/tarea/$tareaId/completar';
+  static String planTareaEliminar(int tareaId)  => '/plan/tarea/$tareaId';
 
   // ── 10. Noticias ─────────────────────────────────────────────────────────
   static const String noticias = '/noticias';
@@ -72,4 +75,11 @@ abstract final class ApiEndpoints {
   static const String conversaciones = '/chat/conversaciones';
   static String conversacionDetalle(int id)  => '/chat/conversaciones/$id';
   static String conversacionMensajes(int id) => '/chat/conversaciones/$id/mensajes';
+
+  // ── 13. Documentos ────────────────────────────────────────────────────────
+  static const String documentos       = '/documentos';
+  static const String documentosUpload = '/documentos/upload';
+  static String documentoEliminar(int id)     => '/documentos/$id';
+  static String documentoGenerar(int id)      => '/documentos/$id/generar';
+  static String documentoMateriales(int id)   => '/documentos/$id/materiales';
 }

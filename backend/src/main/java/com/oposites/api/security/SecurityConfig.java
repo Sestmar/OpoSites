@@ -42,6 +42,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        // Fotos de perfil — acceso público (Flutter las usa sin token en listas)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/fotos/**").permitAll()
                         // Lectura pública de oposiciones y temas (Fase 2)
                         // '*' en Spring Security AntMatcher coincide con UN solo segmento de ruta,
                         // por lo que /api/v1/temas/* matchea /temas/{id} pero NO /temas/{id}/preguntas

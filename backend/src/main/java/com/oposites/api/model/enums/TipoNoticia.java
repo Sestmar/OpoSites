@@ -1,5 +1,9 @@
 package com.oposites.api.model.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum TipoNoticia {
-    CONVOCATORIA, CAMBIO, NOTICIA
+    @JsonProperty("convocatoria") CONVOCATORIA,
+    @JsonProperty("cambio")       CAMBIO,
+    @JsonProperty("noticia")      NOTICIA
 }

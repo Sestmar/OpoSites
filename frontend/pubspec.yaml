@@ -29,6 +29,9 @@ dependencies:
   # ── Serialización JSON ─────────────────────────────────────────────────────
   json_annotation: ^4.9.0
 
+  # ── Tipografía (Plus Jakarta Sans) ────────────────────────────────────────
+  google_fonts: ^6.2.1
+
   # ── Internacionalización (fechas en español) ───────────────────────────────
   intl: ^0.19.0
 
@@ -38,8 +41,15 @@ dependencies:
   # ── Calendario ─────────────────────────────────────────────────────────────
   table_calendar: ^3.1.2
 
+  # ── Selector de imágenes (foto de perfil) ─────────────────────────────────
+  image_picker: ^1.1.2
+
   # ── Links externos (noticias) ──────────────────────────────────────────────
   url_launcher: ^6.3.0
+
+  # ── Documentos: selector de archivos y render Markdown ────────────────────
+  file_picker: ^8.1.7
+  flutter_markdown: ^0.7.7
 
 dev_dependencies:
   flutter_test:

@@ -24,16 +24,3 @@ class ChatMensaje {
   Map<String, dynamic> toJson() => _$ChatMensajeToJson(this);
 }
 
-/// Mensaje local optimista — creado en cliente antes de recibir confirmación.
-/// Usamos id negativo para distinguirlo de mensajes reales del servidor.
-class ChatMensajeOptimista extends ChatMensaje {
-  const ChatMensajeOptimista({required super.mensaje})
-      : super(
-          id: -1,
-          esIa: false,
-          createdAt: _epoch,
-        );
-
-  // Valor placeholder — se reemplaza al construir el widget con DateTime.now()
-  static final _epoch = DateTime.fromMillisecondsSinceEpoch(0);
-}

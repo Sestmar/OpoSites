@@ -1,5 +1,10 @@
 package com.oposites.api.model.enums;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum TipoEvento {
-    ESTUDIO, SIMULACRO, CONVOCATORIA, MANUAL
+    @JsonProperty("estudio")      ESTUDIO,
+    @JsonProperty("simulacro")    SIMULACRO,
+    @JsonProperty("convocatoria") CONVOCATORIA,
+    @JsonProperty("manual")       MANUAL
 }

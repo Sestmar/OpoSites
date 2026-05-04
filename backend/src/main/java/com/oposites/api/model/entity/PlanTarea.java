@@ -45,6 +45,15 @@ public class PlanTarea {
     @Builder.Default
     private boolean completada = false;
 
+    /** Descripción personalizada para tareas manuales. Null en tareas generadas por IA. */
+    @Column(name = "descripcion", length = 200)
+    private String descripcion;
+
+    /** True cuando la tarea fue creada manualmente por el usuario (no por la IA). */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean manual = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

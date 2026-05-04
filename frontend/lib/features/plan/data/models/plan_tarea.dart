@@ -33,6 +33,7 @@ class PlanTarea {
     required this.tipo,
     required this.fecha,
     required this.completada,
+    required this.manual,
     this.temaId,
     this.nombreTema,
     this.simulacroId,
@@ -53,6 +54,10 @@ class PlanTarea {
 
   /// Descripción generada en el backend. Ejemplo: "TEST · Derecho Penal".
   final String? descripcion;
+
+  /// True cuando la tarea fue creada manualmente por el usuario.
+  @JsonKey(defaultValue: false)
+  final bool manual;
 
   factory PlanTarea.fromJson(Map<String, dynamic> json) =>
       _$PlanTareaFromJson(json);

@@ -1,8 +1,9 @@
 package com.oposites.api.model.entity;
 
-import com.oposites.api.model.converter.JsonLongListConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,7 +36,7 @@ public class Simulacro {
     private int preguntasCount;
 
     // IDs de temas de los que se seleccionan preguntas al iniciar el simulacro
-    @Convert(converter = JsonLongListConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "temas_incluidos", columnDefinition = "jsonb", nullable = false)
     private List<Long> temasIncluidos;
 

@@ -18,5 +18,6 @@ public class PlanTareaResponse {
     private String nombreSimulacro;
     private LocalDate fecha;
     private boolean completada;
-    private String descripcion; // generada en el mapping, no persistida
+    private String descripcion; // generada en el mapping (o guardada para tareas manuales)
+    private boolean manual;    // true = creada por el usuario
 }

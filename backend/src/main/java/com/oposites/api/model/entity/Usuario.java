@@ -51,6 +51,9 @@ public class Usuario {
     @Column(name = "plan_manual", columnDefinition = "jsonb")
     private String planManual;
 
+    @Column(name = "foto_perfil_url", length = 500)
+    private String fotoPerfilUrl;
+
     @Column(name = "enabled_chat_private", nullable = false)
     @Builder.Default
     private boolean enabledChatPrivate = false;

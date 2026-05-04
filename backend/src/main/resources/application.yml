@@ -20,6 +20,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -39,22 +44,24 @@ spring:
             # redirect-uri estándar de Spring Security OAuth2 Client
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-  # ── IA: Gemini via OpenAI-compatible endpoint ─────────────────────────────
+  # ── IA: Gemini via Google AI Studio (nativo) ──────────────────────────────
   # Obtener API key en https://aistudio.google.com (free tier, sin tarjeta)
   # Variable de entorno requerida: GEMINI_API_KEY
   ai:
     openai:
-      api-key: ${GEMINI_API_KEY:change-me}
-      base-url: https://generativelanguage.googleapis.com/v1beta/openai
+      api-key: ${GROQ_API_KEY:change-me}
+      base-url: https://api.groq.com/openai
       chat:
         options:
-          model: gemini-2.0-flash
+          model: llama-3.3-70b-versatile
           temperature: 0.7
-      # Desactivar embeddings: el endpoint OpenAI-compatible de Gemini no los soporta
       embedding:
         enabled: false
 
 app:
+  uploads:
+    path: ${UPLOADS_PATH:./uploads}
+
   rate-limit:
     auth:
       # Límites LAXOS para desarrollo local — no interferir en pruebas.

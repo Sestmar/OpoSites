@@ -13,8 +13,10 @@ import com.oposites.api.model.entity.ChatMensaje;
 import com.oposites.api.model.entity.RamaOposicion;
 import com.oposites.api.model.entity.Tema;
 import com.oposites.api.model.entity.Usuario;
+import com.oposites.api.model.enums.TipoNoticia;
 import com.oposites.api.repository.ChatConversacionRepository;
 import com.oposites.api.repository.ChatMensajeRepository;
+import com.oposites.api.repository.NoticiaConvocatoriaRepository;
 import com.oposites.api.repository.ProgresoUsuarioRepository;
 import com.oposites.api.repository.RamaOposicionRepository;
 import com.oposites.api.repository.TemaRepository;
@@ -26,6 +28,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +46,8 @@ public class ChatIAService {
     // Número de temas débiles incluidos en el system prompt
     private static final int TOP_TEMAS_DEBILES = 3;
 
+    private static final int MAX_CONVOCATORIAS = 5;
+
     private final ChatClient chatClient;
     private final ChatConversacionRepository conversacionRepository;
     private final ChatMensajeRepository mensajeRepository;
@@ -50,6 +55,7 @@ public class ChatIAService {
     private final RamaOposicionRepository ramaRepository;
     private final TemaRepository temaRepository;
     private final ProgresoUsuarioRepository progresoRepository;
+    private final NoticiaConvocatoriaRepository noticiaRepository;
     private final ObjectMapper objectMapper;
 
     // ─── Endpoints USER ───────────────────────────────────────────────────────
@@ -168,10 +174,39 @@ public class ChatIAService {
             }
         }
 
+        List<String> convocatorias = List.of();
+        Pageable top5 = PageRequest.of(0, MAX_CONVOCATORIAS);
+        if (usuario.getRamaPrincipalId() != null) {
+            convocatorias = noticiaRepository
+                    .findFiltered(usuario.getRamaPrincipalId(), null, top5)
+                    .getContent()
+                    .stream()
+                    .map(n -> "[%s] %s: %s".formatted(
+                            n.getTipo().name(),
+                            n.getTitulo(),
+                            n.getContenido().length() > 300
+                                    ? n.getContenido().substring(0, 300) + "..."
+                                    : n.getContenido()))
+                    .toList();
+        } else {
+            convocatorias = noticiaRepository
+                    .findGlobalFiltered(null, top5)
+                    .getContent()
+                    .stream()
+                    .map(n -> "[%s] %s: %s".formatted(
+                            n.getTipo().name(),
+                            n.getTitulo(),
+                            n.getContenido().length() > 300
+                                    ? n.getContenido().substring(0, 300) + "..."
+                                    : n.getContenido()))
+                    .toList();
+        }
+
         return ConversacionContexto.builder()
                 .nombreRama(nombreRama)
                 .fechaExamen(fechaExamen)
                 .temasDebiles(temasDebiles)
+                .convocatorias(convocatorias)
                 .build();
     }
 
@@ -198,6 +233,13 @@ public class ChatIAService {
               .append(String.join(", ", ctx.getTemasDebiles())).append(".\n");
         }
 
+        if (ctx.getConvocatorias() != null && !ctx.getConvocatorias().isEmpty()) {
+            sb.append("\nInformación actualizada sobre convocatorias y noticias relevantes para este usuario:\n");
+            ctx.getConvocatorias().forEach(c -> sb.append("- ").append(c).append("\n"));
+            sb.append("Usa esta información cuando el usuario pregunte sobre fechas, convocatorias o novedades. ")
+              .append("Si no hay información suficiente, indícalo y sugiere consultar el BOE o la web oficial.\n");
+        }
+
         sb.append("""
                 Normas de comportamiento:
                 - Responde SIEMPRE en español.
@@ -205,6 +247,10 @@ public class ChatIAService {
                 - No inventes artículos, leyes ni datos normativos. Si no estás seguro de algo, indícalo explícitamente.
                 - Para preguntas de test, explica por qué la respuesta correcta lo es y por qué las demás son incorrectas.
                 - Si el usuario pide un resumen de un tema, organízalo con puntos clave numerados.
+                - IMPORTANTE: Únicamente responde preguntas relacionadas con oposiciones, temarios, leyes, procedimientos, \
+                historia, geografía u otras materias que formen parte de los exámenes oficiales en España. \
+                Si el usuario pregunta sobre cualquier otro tema (tecnología, entretenimiento, vida personal, etc.), \
+                responde amablemente que solo puedes ayudar con temas relacionados con la preparación de oposiciones.
                 """);
 
         return sb.toString();

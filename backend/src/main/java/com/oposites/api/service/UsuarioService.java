@@ -3,18 +3,26 @@ package com.oposites.api.service;
 import com.oposites.api.exception.AppException;
 import com.oposites.api.model.dto.request.UpdatePerfilRequest;
 import com.oposites.api.model.dto.response.UsuarioResponse;
+import com.oposites.api.model.entity.RamaOposicion;
 import com.oposites.api.model.entity.Usuario;
+import com.oposites.api.repository.RamaOposicionRepository;
 import com.oposites.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
 
+    private static final String FOTOS_SUBDIR = "fotos-perfil";
+    private static final String FOTOS_URL_PREFIX = "/api/v1/usuarios/fotos/";
+
     private final UsuarioRepository usuarioRepository;
+    private final RamaOposicionRepository ramaOposicionRepository;
+    private final FileStorageService fileStorageService;
 
     public UsuarioResponse getPerfil(String email) {
         return toResponse(findByEmail(email));
@@ -40,6 +48,23 @@ public class UsuarioService {
     }
 
     @Transactional
+    public UsuarioResponse uploadFoto(String email, MultipartFile file) {
+        Usuario usuario = findByEmail(email);
+
+        // Borrar foto anterior si existe
+        String fotoActual = usuario.getFotoPerfilUrl();
+        if (fotoActual != null && fotoActual.startsWith(FOTOS_URL_PREFIX)) {
+            String filenameAnterior = fotoActual.substring(FOTOS_URL_PREFIX.length());
+            fileStorageService.delete(filenameAnterior, FOTOS_SUBDIR);
+        }
+
+        String filename = fileStorageService.store(file, FOTOS_SUBDIR);
+        usuario.setFotoPerfilUrl(FOTOS_URL_PREFIX + filename);
+
+        return toResponse(usuarioRepository.save(usuario));
+    }
+
+    @Transactional
     public void deleteAccount(String email) {
         usuarioRepository.delete(findByEmail(email));
     }
@@ -54,12 +79,21 @@ public class UsuarioService {
     }
 
     private UsuarioResponse toResponse(Usuario u) {
+        String nombreRama = null;
+        if (u.getRamaPrincipalId() != null) {
+            nombreRama = ramaOposicionRepository.findById(u.getRamaPrincipalId())
+                    .map(RamaOposicion::getNombre)
+                    .orElse(null);
+        }
+
         return UsuarioResponse.builder()
                 .id(u.getId())
                 .email(u.getEmail())
                 .nombre(u.getNombre())
                 .ciudad(u.getCiudad())
                 .ramaPrincipalId(u.getRamaPrincipalId())
+                .nombreRama(nombreRama)
+                .fotoPerfilUrl(u.getFotoPerfilUrl())
                 .fechaExamenObjetivo(u.getFechaExamenObjetivo())
                 .enabledChatPrivate(u.isEnabledChatPrivate())
                 .role(u.getRole())

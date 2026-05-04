@@ -2,6 +2,8 @@ package com.oposites.api.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +30,7 @@ public class ChatConversacion {
     private RamaOposicion rama;
 
     // ConversacionContexto serializado como JSON — se lee/escribe con Jackson en ChatIAService
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String contexto;
 

@@ -46,9 +46,13 @@ final class AuthLoading extends AuthState {
 }
 
 /// Sesión activa. El accessToken está en [SecureStorage].
-/// No cargamos datos de usuario aquí; eso es responsabilidad del perfil.
+///
+/// [ramaPrincipalId] es null cuando el usuario aún no eligió su oposición
+/// y debe pasar por el onboarding. Cualquier otro valor (incluido -1 cuando
+/// no se pudo verificar por red) significa que ya tiene rama asignada.
 final class AuthAuthenticated extends AuthState {
-  const AuthAuthenticated();
+  const AuthAuthenticated({this.ramaPrincipalId});
+  final int? ramaPrincipalId;
 }
 
 /// Sin sesión. El usuario debe ir a Login o Register.
@@ -86,7 +90,17 @@ class Auth extends _$Auth {
     state = const AuthLoading();
     final storage = ref.read(secureStorageProvider);
     final hasTokens = await storage.hasTokens();
-    state = hasTokens ? const AuthAuthenticated() : const AuthUnauthenticated();
+    if (!hasTokens) {
+      state = const AuthUnauthenticated();
+      return;
+    }
+    try {
+      final me = await ref.read(authRepositoryProvider).getMe();
+      state = AuthAuthenticated(ramaPrincipalId: me.ramaPrincipalId);
+    } catch (_) {
+      // Sin red en el arranque: dejamos pasar al home (evita bloquear al usuario)
+      state = const AuthAuthenticated(ramaPrincipalId: -1);
+    }
   }
 
   // ── Acciones públicas ──────────────────────────────────────────────────────
@@ -105,7 +119,8 @@ class Auth extends _$Auth {
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
           );
-      state = const AuthAuthenticated();
+      final me = await ref.read(authRepositoryProvider).getMe();
+      state = AuthAuthenticated(ramaPrincipalId: me.ramaPrincipalId);
     } on ApiException catch (e) {
       state = AuthError(e.message);
     }
@@ -133,7 +148,8 @@ class Auth extends _$Auth {
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
           );
-      state = const AuthAuthenticated();
+      final me = await ref.read(authRepositoryProvider).getMe();
+      state = AuthAuthenticated(ramaPrincipalId: me.ramaPrincipalId);
     } on ApiException catch (e) {
       state = AuthError(e.message);
     }
@@ -146,6 +162,12 @@ class Auth extends _$Auth {
     state = const AuthLoading();
     await ref.read(authRepositoryProvider).logout();
     state = const AuthUnauthenticated();
+  }
+
+  /// Llamado desde [SelectOposicionScreen] después de que el usuario elige rama.
+  /// Actualiza el estado para que el router redirija al home.
+  void ramaSelected(int ramaId) {
+    state = AuthAuthenticated(ramaPrincipalId: ramaId);
   }
 
   /// Limpia el error para que la UI pueda mostrar el formulario de nuevo.

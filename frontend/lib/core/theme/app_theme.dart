@@ -1,80 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Tema visual de opoSites.
+import 'app_colors.dart';
+
+/// Tema visual de opoSites — dark-first, teal como color principal.
 ///
-/// Material 3 con ColorScheme generado desde [_seed].
-/// Puntos de extensión:
-///   - Cambiar [_seed] para ajustar toda la paleta de color.
-///   - Añadir [darkTheme] cuando se requiera modo oscuro.
+/// Uso en [MaterialApp]:
+/// ```dart
+/// theme: AppTheme.light,
+/// darkTheme: AppTheme.dark,
+/// themeMode: ThemeMode.dark,
+/// ```
 abstract final class AppTheme {
-  // Azul profesional — transmite confianza y enfoque académico.
-  static const Color _seed = Color(0xFF1E40AF);
+  static const Color _seed = Color(0xFF14B8A6); // teal
 
-  static ThemeData get light {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: _seed,
-      brightness: Brightness.light,
-    );
+  static ThemeData get light => _buildTheme(
+        ColorScheme.fromSeed(seedColor: _seed, brightness: Brightness.light),
+        isDark: false,
+      );
 
+  static ThemeData get dark => _buildTheme(
+        ColorScheme.fromSeed(
+          seedColor: _seed,
+          brightness: Brightness.dark,
+        ).copyWith(
+          surface: AppColors.darkSurface,
+          onSurface: AppColors.darkText,
+          surfaceContainerHighest: AppColors.darkSurfaceMuted,
+          outline: AppColors.darkBorder,
+          outlineVariant: AppColors.darkBorder,
+        ),
+        isDark: true,
+      );
+
+  static ThemeData _buildTheme(ColorScheme scheme, {required bool isDark}) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
+      scaffoldBackgroundColor:
+          isDark ? AppColors.darkBg : AppColors.lightBg,
 
       // ── Tipografía ──────────────────────────────────────────────────────
-      // Flutter 3.x usa la fuente del sistema por defecto (Roboto en Android,
-      // SF Pro en iOS). Sin imports externos para mantener el bloque simple.
-      textTheme: TextTheme(
-        // Títulos de pantalla
-        headlineLarge: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: scheme.onSurface,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: scheme.onSurface,
-        ),
-        // Subtítulos y secciones
-        titleLarge: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurface,
-        ),
-        titleMedium: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: scheme.onSurface,
-        ),
-        // Cuerpo de texto
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: scheme.onSurface,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: scheme.onSurface,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: scheme.onSurfaceVariant,
-        ),
-        // Labels (chips, badges, botones)
-        labelLarge: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: scheme.onPrimary,
-        ),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(
+        ThemeData(brightness: scheme.brightness).textTheme,
+      ).apply(
+        bodyColor: scheme.onSurface,
+        displayColor: scheme.onSurface,
       ),
 
       // ── Cards ────────────────────────────────────────────────────────────
       cardTheme: CardThemeData(
         elevation: 0,
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: scheme.outlineVariant),
+          side: BorderSide(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            width: 0.5,
+          ),
         ),
-        color: scheme.surface,
         margin: EdgeInsets.zero,
       ),
 
@@ -139,10 +123,11 @@ abstract final class AppTheme {
 
       // ── AppBar ────────────────────────────────────────────────────────────
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
+        backgroundColor:
+            isDark ? AppColors.darkBg : AppColors.lightBg,
         foregroundColor: scheme.onSurface,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontSize: 20,
@@ -151,12 +136,15 @@ abstract final class AppTheme {
         ),
       ),
 
-      // ── BottomNavigationBar ───────────────────────────────────────────────
+      // ── NavigationBar ─────────────────────────────────────────────────────
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: scheme.surface,
-        indicatorColor: scheme.primaryContainer,
+        backgroundColor:
+            isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        indicatorColor: isDark
+            ? AppColors.primarySoftDark
+            : AppColors.primarySoftLight,
         labelTextStyle: WidgetStateProperty.all(
-          TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
       ),
 
@@ -170,9 +158,9 @@ abstract final class AppTheme {
 
       // ── Divider ───────────────────────────────────────────────────────────
       dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant,
+        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
         space: 1,
-        thickness: 1,
+        thickness: 0.5,
       ),
 
       // ── SnackBar ─────────────────────────────────────────────────────────

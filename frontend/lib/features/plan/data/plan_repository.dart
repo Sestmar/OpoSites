@@ -69,6 +69,39 @@ class PlanRepository {
     }
   }
 
+  /// Crea una tarea manual para hoy y la devuelve.
+  Future<PlanTarea> crearTarea({
+    required TipoPlanTarea tipo,
+    String? descripcion,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.planTarea,
+        data: {
+          'tipo': tipo.name,
+          if (descripcion != null && descripcion.isNotEmpty)
+            'descripcion': descripcion,
+        },
+      );
+      return PlanTarea.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
+  /// Elimina una tarea del plan por ID.
+  Future<void> eliminarTarea(int tareaId) async {
+    try {
+      await _dio.delete(ApiEndpoints.planTareaEliminar(tareaId));
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
   /// Regenera el plan de 7 días y devuelve el plan del día actual.
   ///
   /// No sobreescribe tareas ya completadas (garantía del backend).

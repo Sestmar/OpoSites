@@ -76,6 +76,41 @@ class PlanHoyNotifier extends _$PlanHoyNotifier {
     );
   }
 
+  /// Crea una tarea manual para hoy y la añade al final de la lista.
+  Future<void> crearTarea({
+    required TipoPlanTarea tipo,
+    String? descripcion,
+  }) async {
+    final tarea = await ref.read(planRepositoryProvider).crearTarea(
+          tipo: tipo,
+          descripcion: descripcion,
+        );
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final nuevasTareas = [...current.tareas, tarea];
+    state = AsyncData(PlanHoy(
+      fecha: current.fecha,
+      tareas: nuevasTareas,
+      tareasCompletadas: current.tareasCompletadas,
+      totalTareas: current.totalTareas + 1,
+    ));
+  }
+
+  /// Elimina una tarea del plan por ID (solo tareas no completadas).
+  Future<void> eliminarTarea(int tareaId) async {
+    await ref.read(planRepositoryProvider).eliminarTarea(tareaId);
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final nuevasTareas = current.tareas.where((t) => t.id != tareaId).toList();
+    final completadas = nuevasTareas.where((t) => t.completada).length;
+    state = AsyncData(PlanHoy(
+      fecha: current.fecha,
+      tareas: nuevasTareas,
+      tareasCompletadas: completadas,
+      totalTareas: nuevasTareas.length,
+    ));
+  }
+
   /// Regenera el plan de 7 días y actualiza el estado con el plan de hoy.
   Future<void> regenerarPlan() async {
     state = const AsyncLoading();

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/screens/select_oposicion_screen.dart';
+import '../../features/perfil/ui/perfil_screen.dart';
+import '../../features/perfil/ui/editar_perfil_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/ui/login_screen.dart';
 import '../../features/auth/ui/register_screen.dart';
@@ -22,6 +24,13 @@ import '../../features/progreso/ui/progreso_screen.dart';
 import '../../features/simulacros/ui/simulacro_active_screen.dart';
 import '../../features/simulacros/ui/simulacro_result_screen.dart';
 import '../../features/simulacros/ui/simulacros_list_screen.dart';
+import '../../features/documentos/data/models/documento.dart';
+import '../../features/documentos/data/models/material_generado.dart';
+import '../../features/documentos/ui/conceptos_clave_screen.dart';
+import '../../features/documentos/ui/documento_detalle_screen.dart';
+import '../../features/documentos/ui/documentos_screen.dart';
+import '../../features/documentos/ui/flashcards_screen.dart';
+import '../../features/documentos/ui/resumen_screen.dart';
 import '../../features/tests/ui/test_active_screen.dart';
 import '../../features/tests/ui/test_config_screen.dart';
 import '../../features/tests/ui/test_fallos_screen.dart';
@@ -67,6 +76,17 @@ abstract final class AppRoutes {
   static const planConfig = '/plan/config';
   static const chat       = '/chat';
   static String chatDetalle(int id) => '/chat/$id';
+
+  static const perfil      = '/perfil';
+  static const editarPerfil = '/perfil/editar';
+  static const cambiarOposicionPerfil = '/perfil/cambiar-oposicion';
+
+  // ── Documentos sub-rutas ───────────────────────────────────────────────────
+  static const documentos = '/documentos';
+  static String documentoDetalle(int id)    => '/documentos/$id';
+  static String documentoFlashcards(int id) => '/documentos/$id/flashcards';
+  static String documentoResumen(int id)    => '/documentos/$id/resumen';
+  static String documentoConceptos(int id)  => '/documentos/$id/conceptos';
 }
 
 // ── Auth listenable ────────────────────────────────────────────────────────────
@@ -97,15 +117,21 @@ GoRouter appRouter(AppRouterRef ref) {
       final authState = ref.read(authProvider);
       final loc = state.matchedLocation;
 
-      final isAuthRoute = loc == AppRoutes.login || loc == AppRoutes.register;
-      final isSplash    = loc == AppRoutes.splash;
+      final isAuthRoute     = loc == AppRoutes.login || loc == AppRoutes.register;
+      final isSplash        = loc == AppRoutes.splash;
+      final isSelectOposicion = loc == AppRoutes.selectOposicion;
 
       return switch (authState) {
         AuthInitial() || AuthLoading() =>
           isSplash ? null : AppRoutes.splash,
 
+        // Sin rama → onboarding obligatorio antes del home
+        AuthAuthenticated(ramaPrincipalId: null) =>
+          isSelectOposicion ? null : AppRoutes.selectOposicion,
+
+        // Con rama (o -1 por fallo de red) → home normal
         AuthAuthenticated() =>
-          (isAuthRoute || isSplash) ? AppRoutes.home : null,
+          (isAuthRoute || isSplash || isSelectOposicion) ? AppRoutes.home : null,
 
         AuthUnauthenticated() || AuthError() =>
           isAuthRoute ? null : AppRoutes.login,
@@ -247,6 +273,72 @@ GoRouter appRouter(AppRouterRef ref) {
                   ),
                 ],
               ),
+              GoRoute(
+                path: AppRoutes.perfil,
+                builder: (_, __) => const PerfilScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'editar',
+                    builder: (_, __) => const EditarPerfilScreen(),
+                  ),
+                  GoRoute(
+                    path: 'cambiar-oposicion',
+                    builder: (_, __) =>
+                        const SelectOposicionScreen(fromPerfil: true),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: AppRoutes.documentos,
+                builder: (_, __) => const DocumentosScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, state) {
+                      final extra = state.extra;
+                      if (extra is! Documento) {
+                        return const _ExtraLostScreen();
+                      }
+                      return DocumentoDetalleScreen(
+                        docId: int.parse(state.pathParameters['id']!),
+                        documento: extra,
+                      );
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'flashcards',
+                        builder: (_, state) {
+                          final extra = state.extra;
+                          if (extra is! MaterialGenerado) {
+                            return const _ExtraLostScreen();
+                          }
+                          return FlashcardsScreen(material: extra);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'resumen',
+                        builder: (_, state) {
+                          final extra = state.extra;
+                          if (extra is! MaterialGenerado) {
+                            return const _ExtraLostScreen();
+                          }
+                          return ResumenScreen(material: extra);
+                        },
+                      ),
+                      GoRoute(
+                        path: 'conceptos',
+                        builder: (_, state) {
+                          final extra = state.extra;
+                          if (extra is! MaterialGenerado) {
+                            return const _ExtraLostScreen();
+                          }
+                          return ConceptosClaveScreen(material: extra);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -255,3 +347,30 @@ GoRouter appRouter(AppRouterRef ref) {
   );
 }
 
+// ── Pantalla de seguridad cuando extra se pierde (hot restart / deep link) ─────
+
+class _ExtraLostScreen extends StatelessWidget {
+  const _ExtraLostScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.link_off_outlined, size: 48),
+            const SizedBox(height: 16),
+            const Text('La sesión de navegación expiró.'),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () => context.go(AppRoutes.documentos),
+              child: const Text('Volver a documentos'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

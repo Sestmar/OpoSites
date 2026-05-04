@@ -11,6 +11,7 @@ PlanTarea _$PlanTareaFromJson(Map<String, dynamic> json) => PlanTarea(
       tipo: $enumDecode(_$TipoPlanTareaEnumMap, json['tipo']),
       fecha: json['fecha'] as String,
       completada: json['completada'] as bool,
+      manual: json['manual'] as bool? ?? false,
       temaId: (json['temaId'] as num?)?.toInt(),
       nombreTema: json['nombreTema'] as String?,
       simulacroId: (json['simulacroId'] as num?)?.toInt(),
@@ -28,6 +29,7 @@ Map<String, dynamic> _$PlanTareaToJson(PlanTarea instance) => <String, dynamic>{
       'fecha': instance.fecha,
       'completada': instance.completada,
       'descripcion': instance.descripcion,
+      'manual': instance.manual,
     };
 
 const _$TipoPlanTareaEnumMap = {

@@ -1,10 +1,11 @@
 package com.oposites.api.model.entity;
 
-import com.oposites.api.model.converter.JsonLongListConverter;
 import com.oposites.api.model.enums.EstadoSession;
 import com.oposites.api.model.enums.TipoSession;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,7 +46,7 @@ public class TestSession {
     private EstadoSession estado = EstadoSession.EN_CURSO;
 
     // IDs de preguntas seleccionadas para esta sesión (orden de presentación)
-    @Convert(converter = JsonLongListConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "pregunta_ids", columnDefinition = "jsonb", nullable = false)
     private List<Long> preguntaIds;
 

@@ -1,6 +1,8 @@
 package com.oposites.api.controller;
 
+import com.oposites.api.model.dto.request.CreatePlanTareaRequest;
 import com.oposites.api.model.dto.request.UpdatePlanConfiguracionRequest;
+import jakarta.validation.Valid;
 import com.oposites.api.model.dto.response.PlanConfiguracionResponse;
 import com.oposites.api.model.dto.response.PlanHoyResponse;
 import com.oposites.api.model.dto.response.PlanTareaResponse;
@@ -43,6 +45,21 @@ public class PlanController {
     public ResponseEntity<PlanHoyResponse> generarPlan(
             @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(planService.generarPlan(user.getUsername()));
+    }
+
+    @PostMapping("/tarea")
+    public ResponseEntity<PlanTareaResponse> crearTareaManual(
+            @AuthenticationPrincipal UserDetails user,
+            @Valid @RequestBody CreatePlanTareaRequest request) {
+        return ResponseEntity.ok(planService.crearTareaManual(user.getUsername(), request));
+    }
+
+    @DeleteMapping("/tarea/{tareaId}")
+    public ResponseEntity<Void> eliminarTarea(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long tareaId) {
+        planService.eliminarTarea(tareaId, user.getUsername());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/tarea/{tareaId}/completar")
