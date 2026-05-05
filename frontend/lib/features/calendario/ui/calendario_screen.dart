@@ -706,6 +706,9 @@ class _EventoFormDialogState extends State<_EventoFormDialog> {
             Row(
               children: [
                 OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                  ),
                   onPressed: _pickHora,
                   icon: const Icon(Icons.access_time, size: 16),
                   label: Text(
@@ -715,6 +718,9 @@ class _EventoFormDialogState extends State<_EventoFormDialog> {
                 if (_hora != null) ...[
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 40),
+                    ),
                     onPressed: _pickHoraFin,
                     icon: const Icon(Icons.access_time_filled, size: 16),
                     label: Text(
@@ -743,11 +749,17 @@ class _EventoFormDialogState extends State<_EventoFormDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                  ),
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancelar'),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                  ),
                   onPressed: _submit,
                   child: Text(esEdicion ? 'Guardar' : 'Crear'),
                 ),

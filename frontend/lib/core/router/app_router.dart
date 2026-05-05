@@ -21,6 +21,7 @@ import '../../features/plan/ui/plan_config_screen.dart';
 import '../../features/plan/ui/plan_hoy_screen.dart';
 import '../../features/practicar/ui/practicar_menu_screen.dart';
 import '../../features/progreso/ui/progreso_screen.dart';
+import '../../features/progreso/ui/temario_screen.dart';
 import '../../features/simulacros/ui/simulacro_active_screen.dart';
 import '../../features/simulacros/ui/simulacro_result_screen.dart';
 import '../../features/simulacros/ui/simulacros_list_screen.dart';
@@ -55,6 +56,7 @@ abstract final class AppRoutes {
   static const home      = '/home';
   static const practicar = '/practicar';
   static const progreso  = '/progreso';
+  static const temario   = '/progreso/temario';
   static const mas       = '/mas';
 
   // ── Practicar sub-rutas ────────────────────────────────────────────────────
@@ -228,6 +230,12 @@ GoRouter appRouter(AppRouterRef ref) {
               GoRoute(
                 path: AppRoutes.progreso,
                 builder: (_, __) => const ProgresoScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'temario',
+                    builder: (_, __) => const TemarioScreen(),
+                  ),
+                ],
               ),
             ],
           ),
