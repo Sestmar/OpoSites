@@ -178,7 +178,7 @@ public class ChatIAService {
         Pageable top5 = PageRequest.of(0, MAX_CONVOCATORIAS);
         if (usuario.getRamaPrincipalId() != null) {
             convocatorias = noticiaRepository
-                    .findFiltered(usuario.getRamaPrincipalId(), null, EstadoEditorialNoticia.PUBLICADA, top5)
+                    .findFiltered(usuario.getRamaPrincipalId(), null, EstadoEditorialNoticia.PUBLICADA, null, top5)
                     .getContent()
                     .stream()
                     .map(n -> "[%s] %s: %s".formatted(
@@ -190,7 +190,7 @@ public class ChatIAService {
                     .toList();
         } else {
             convocatorias = noticiaRepository
-                    .findGlobalFiltered(null, EstadoEditorialNoticia.PUBLICADA, top5)
+                    .findGlobalFiltered(null, EstadoEditorialNoticia.PUBLICADA, null, top5)
                     .getContent()
                     .stream()
                     .map(n -> "[%s] %s: %s".formatted(

@@ -3,6 +3,7 @@ package com.oposites.api.service;
 import com.oposites.api.exception.AppException;
 import com.oposites.api.model.dto.request.CreateNoticiaRequest;
 import com.oposites.api.model.dto.request.UpdateNoticiaRequest;
+import com.oposites.api.model.dto.response.NoticiaConteosResponse;
 import com.oposites.api.model.dto.response.NoticiaResumenResponse;
 import com.oposites.api.model.dto.response.NoticiaResponse;
 import com.oposites.api.model.entity.NoticiaConvocatoria;
@@ -39,14 +40,20 @@ public class NoticiaService {
 
     // ─── Endpoints USER ────────────────────────────────────────────────────────
 
-    public Page<NoticiaResumenResponse> listarNoticias(String email, Long ramaId, TipoNoticia tipo, Pageable pageable) {
+    public Page<NoticiaResumenResponse> listarNoticias(String email, Long ramaId, TipoNoticia tipo, String q, Pageable pageable) {
         Usuario usuario = findUsuario(email);
-        Long efectivoRamaId = ramaId != null ? ramaId : usuario.getRamaPrincipalId();
         Set<Long> leidasIds = noticiaLeidaRepository.findNoticiaIdsByUsuarioId(usuario.getId());
 
-        Page<NoticiaConvocatoria> page = efectivoRamaId != null
-                ? noticiaRepository.findFiltered(efectivoRamaId, tipo, EstadoEditorialNoticia.PUBLICADA, pageable)
-                : noticiaRepository.findGlobalFiltered(tipo, EstadoEditorialNoticia.PUBLICADA, pageable);
+        // q vacío o solo espacios → null (sin filtro)
+        String efectivoQ = (q != null && !q.isBlank()) ? q.trim() : null;
+
+        // ramaId null → "General": solo noticias globales (rama IS NULL).
+        // ramaId = X   → noticias de esa rama + globales (n.rama.id = X OR n.rama IS NULL).
+        // El frontend siempre envía el ramaId explícito del chip seleccionado; no hay fallback
+        // a la rama principal del usuario para evitar inconsistencias con los conteos.
+        Page<NoticiaConvocatoria> page = ramaId != null
+                ? noticiaRepository.findFiltered(ramaId, tipo, EstadoEditorialNoticia.PUBLICADA, efectivoQ, pageable)
+                : noticiaRepository.findGlobalFiltered(tipo, EstadoEditorialNoticia.PUBLICADA, efectivoQ, pageable);
 
         return page.map(n -> toResumenResponse(n, leidasIds.contains(n.getId())));
     }
@@ -75,6 +82,39 @@ public class NoticiaService {
                     .noticia(noticia)
                     .usuario(usuario)
                     .build());
+        }
+    }
+
+    /**
+     * Devuelve conteos por tipo coherentes con la query principal de /noticias.
+     *
+     * <ul>
+     *   <li>ramaId = null  → "General": solo noticias con rama IS NULL (globales).
+     *       Los conteos pueden ser altos porque la mayoría del BOE ingresa sin rama.
+     *   <li>ramaId = X     → noticias de la rama X + globales (misma lógica que findFiltered).
+     *       Los conteos suelen ser similares a "General" mientras pocas noticias tengan rama asignada.
+     * </ul>
+     *
+     * No hay fallback a la rama principal del usuario: el frontend envía siempre el ramaId
+     * explícito del chip seleccionado para garantizar coherencia entre lista y conteos.
+     */
+    public NoticiaConteosResponse getConteos(Long ramaId) {
+        // ramaId null → "General": solo globales (rama IS NULL)
+        // ramaId = X  → rama X + globales (n.rama.id = X OR n.rama IS NULL)
+        if (ramaId != null) {
+            return new NoticiaConteosResponse(
+                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, null),
+                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CONVOCATORIA),
+                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CAMBIO),
+                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.NOTICIA)
+            );
+        } else {
+            return new NoticiaConteosResponse(
+                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, null),
+                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CONVOCATORIA),
+                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CAMBIO),
+                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.NOTICIA)
+            );
         }
     }
 

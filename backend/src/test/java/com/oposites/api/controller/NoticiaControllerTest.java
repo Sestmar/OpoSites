@@ -48,16 +48,18 @@ class NoticiaControllerTest {
                 eq("user@oposites.com"),
                 eq(5L),
                 eq(TipoNoticia.CAMBIO),
+                isNull(),
                 eq(PageRequest.of(2, 15))
         )).thenReturn(page);
 
-        var response = controller.listar(userDetails, "CaMbIo", 5L, 2, 15);
+        var response = controller.listar(userDetails, "CaMbIo", 5L, null, 2, 15);
 
         assertEquals(200, response.getStatusCode().value());
         verify(noticiaService).listarNoticias(
                 "user@oposites.com",
                 5L,
                 TipoNoticia.CAMBIO,
+                null,
                 PageRequest.of(2, 15)
         );
     }
@@ -65,7 +67,7 @@ class NoticiaControllerTest {
     @Test
     void listarLanzaBadRequestSiTipoInvalido() {
         assertThrows(AppException.class, () ->
-                controller.listar(userDetails, "invalido", null, 0, 20)
+                controller.listar(userDetails, "invalido", null, null, 0, 20)
         );
         verifyNoInteractions(noticiaService);
     }
@@ -77,14 +79,16 @@ class NoticiaControllerTest {
                 eq("user@oposites.com"),
                 isNull(),
                 isNull(),
+                isNull(),
                 eq(PageRequest.of(0, 20))
         )).thenReturn(page);
 
-        var response = controller.listar(userDetails, null, null, 0, 20);
+        var response = controller.listar(userDetails, null, null, null, 0, 20);
 
         assertEquals(200, response.getStatusCode().value());
         verify(noticiaService).listarNoticias(
                 "user@oposites.com",
+                null,
                 null,
                 null,
                 PageRequest.of(0, 20)

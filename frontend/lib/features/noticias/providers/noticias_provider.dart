@@ -1,7 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../auth/providers/auth_provider.dart' show dioProvider;
 import '../data/models/noticia.dart';
+import '../data/models/noticia_conteos.dart';
 import '../data/models/noticia_resumen.dart';
 import '../data/noticias_repository.dart';
 
@@ -12,6 +15,15 @@ part 'noticias_provider.g.dart';
 @Riverpod(keepAlive: true)
 NoticiasRepository noticiasRepository(NoticiasRepositoryRef ref) =>
     NoticiasRepository(dio: ref.watch(dioProvider));
+
+// ── Provider de conteos ────────────────────────────────────────────────────────
+
+/// Conteos por tipo de noticia para una rama dada (null = globales).
+/// Se recalcula automáticamente al cambiar de rama.
+/// Usar como: ref.watch(noticiaConteosProvider(ramaId))
+final noticiaConteosProvider =
+    FutureProvider.family<NoticiaConteos, int?>((ref, ramaId) =>
+        ref.read(noticiasRepositoryProvider).getConteos(ramaId: ramaId));
 
 // ── Estado de la lista paginada ────────────────────────────────────────────────
 
@@ -29,6 +41,7 @@ class NoticiasListState {
     required this.hayMas,
     this.filtroTipo,
     this.filtroRamaId,
+    this.filtroQ,
   });
 
   final List<NoticiaResumen> items;
@@ -36,6 +49,7 @@ class NoticiasListState {
   final bool hayMas;
   final TipoNoticia? filtroTipo;
   final int? filtroRamaId;
+  final String? filtroQ;
 
   /// Estado inicial vacío — antes de cualquier carga.
   static const empty = NoticiasListState(
@@ -67,28 +81,32 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
   ///
   /// [tipo]   null = todas las categorías.
   /// [ramaId] null = todas las ramas del usuario.
-  Future<void> cargar({TipoNoticia? tipo, int? ramaId}) async {
+  /// [q]      null o vacío = sin filtro de búsqueda.
+  Future<void> cargar({TipoNoticia? tipo, int? ramaId, String? q}) async {
+    final efectivoQ = (q != null && q.trim().isNotEmpty) ? q.trim() : null;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final page = await ref
           .read(noticiasRepositoryProvider)
-          .getNoticias(tipo: tipo, ramaId: ramaId, page: 0);
+          .getNoticias(tipo: tipo, ramaId: ramaId, q: efectivoQ, page: 0);
       return NoticiasListState(
         items: page.content,
         paginaActual: 0,
         hayMas: !page.last,
         filtroTipo: tipo,
         filtroRamaId: ramaId,
+        filtroQ: efectivoQ,
       );
     });
   }
 
-  /// Recarga respetando los filtros actuales.
+  /// Recarga respetando los filtros actuales (tipo, ramaId y q).
   Future<void> recargarActual() async {
     final current = state.valueOrNull;
     await cargar(
       tipo: current?.filtroTipo,
       ramaId: current?.filtroRamaId,
+      q: current?.filtroQ,
     );
   }
 
@@ -104,6 +122,7 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
     final page = await ref.read(noticiasRepositoryProvider).getNoticias(
           tipo: current.filtroTipo,
           ramaId: current.filtroRamaId,
+          q: current.filtroQ,
           page: current.paginaActual + 1,
         );
 
@@ -113,6 +132,7 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
       hayMas: !page.last,
       filtroTipo: current.filtroTipo,
       filtroRamaId: current.filtroRamaId,
+      filtroQ: current.filtroQ,
     ));
   }
 
@@ -132,6 +152,7 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
       hayMas: current.hayMas,
       filtroTipo: current.filtroTipo,
       filtroRamaId: current.filtroRamaId,
+      filtroQ: current.filtroQ,
     ));
   }
 

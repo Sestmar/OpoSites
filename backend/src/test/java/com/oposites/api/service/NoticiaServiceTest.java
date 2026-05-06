@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,40 +52,32 @@ class NoticiaServiceTest {
     }
 
     @Test
-    void listarNoticiasUsaRamaPrincipalSiNoSePasaRamaId() {
+    void listarNoticiasConNullRamaIdUsaSoloGlobales() {
+        // ramaId = null siempre llama a findGlobalFiltered, sin importar la rama del usuario.
+        // El frontend envía el ramaId explícito del chip; null significa "General" (solo globales).
         Usuario user = Usuario.builder()
                 .id(1L)
                 .email("user@oposites.com")
-                .ramaPrincipalId(7L)
+                .ramaPrincipalId(7L) // tiene rama, pero no debe usarse como fallback
                 .build();
 
         PageRequest pageable = PageRequest.of(0, 20);
-        Page<NoticiaConvocatoria> page = new PageImpl<>(List.of(
-                NoticiaConvocatoria.builder()
-                        .id(10L)
-                        .titulo("N")
-                        .contenido("C")
-                        .tipo(TipoNoticia.NOTICIA)
-                        .fechaPublicacion(LocalDateTime.now())
-                        .estadoEditorial(EstadoEditorialNoticia.PUBLICADA)
-                        .build()
-        ));
 
         when(usuarioRepository.findByEmail("user@oposites.com")).thenReturn(Optional.of(user));
         when(noticiaLeidaRepository.findNoticiaIdsByUsuarioId(1L)).thenReturn(Set.of());
-        when(noticiaRepository.findFiltered(
-                eq(7L),
+        when(noticiaRepository.findGlobalFiltered(
                 eq(TipoNoticia.CAMBIO),
                 eq(EstadoEditorialNoticia.PUBLICADA),
+                isNull(),
                 eq(pageable)
-        )).thenReturn(page);
+        )).thenReturn(Page.empty());
 
-        service.listarNoticias("user@oposites.com", null, TipoNoticia.CAMBIO, pageable);
+        service.listarNoticias("user@oposites.com", null, TipoNoticia.CAMBIO, null, pageable);
 
-        verify(noticiaRepository).findFiltered(
-                7L,
+        verify(noticiaRepository).findGlobalFiltered(
                 TipoNoticia.CAMBIO,
                 EstadoEditorialNoticia.PUBLICADA,
+                null,
                 pageable
         );
     }
@@ -103,14 +96,16 @@ class NoticiaServiceTest {
         when(noticiaRepository.findGlobalFiltered(
                 eq(TipoNoticia.NOTICIA),
                 eq(EstadoEditorialNoticia.PUBLICADA),
+                isNull(),
                 eq(pageable)
         )).thenReturn(Page.empty());
 
-        service.listarNoticias("user@oposites.com", null, TipoNoticia.NOTICIA, pageable);
+        service.listarNoticias("user@oposites.com", null, TipoNoticia.NOTICIA, null, pageable);
 
         verify(noticiaRepository).findGlobalFiltered(
                 TipoNoticia.NOTICIA,
                 EstadoEditorialNoticia.PUBLICADA,
+                null,
                 pageable
         );
     }

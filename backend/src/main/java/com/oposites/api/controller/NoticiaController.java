@@ -1,6 +1,7 @@
 package com.oposites.api.controller;
 
 import com.oposites.api.exception.AppException;
+import com.oposites.api.model.dto.response.NoticiaConteosResponse;
 import com.oposites.api.model.dto.response.NoticiaResumenResponse;
 import com.oposites.api.model.dto.response.NoticiaResponse;
 import com.oposites.api.model.enums.TipoNoticia;
@@ -28,6 +29,7 @@ public class NoticiaController {
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) Long ramaId,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         final TipoNoticia tipoNoticia;
@@ -38,7 +40,14 @@ public class NoticiaController {
         }
 
         return ResponseEntity.ok(noticiaService.listarNoticias(
-                user.getUsername(), ramaId, tipoNoticia, PageRequest.of(page, size)));
+                user.getUsername(), ramaId, tipoNoticia, q, PageRequest.of(page, size)));
+    }
+
+    @GetMapping("/conteos")
+    public ResponseEntity<NoticiaConteosResponse> conteos(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) Long ramaId) {
+        return ResponseEntity.ok(noticiaService.getConteos(ramaId));
     }
 
     @GetMapping("/{id}")

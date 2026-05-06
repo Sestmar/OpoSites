@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/constants/api_endpoints.dart';
 import 'models/noticia.dart';
+import 'models/noticia_conteos.dart';
 import 'models/noticia_resumen.dart';
 
 /// Único punto de acceso a los endpoints /noticias/**.
@@ -30,6 +31,7 @@ class NoticiasRepository {
   Future<NoticiasPage> getNoticias({
     TipoNoticia? tipo,
     int? ramaId,
+    String? q,
     int page = 0,
     int size = 20,
   }) async {
@@ -41,6 +43,7 @@ class NoticiasRepository {
           'size': size,
           if (tipo != null) 'tipo': tipo.name.toUpperCase(),
           if (ramaId != null) 'ramaId': ramaId,
+          if (q != null && q.isNotEmpty) 'q': q,
         },
       );
       return NoticiasPage.fromJson(response.data!);
@@ -61,6 +64,24 @@ class NoticiasRepository {
         ApiEndpoints.noticiaDetalle(id),
       );
       return Noticia.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
+  /// Devuelve los conteos globales de noticias por tipo para la rama del usuario.
+  /// Se llama una sola vez al entrar en la pantalla de Noticias.
+  Future<NoticiaConteos> getConteos({int? ramaId}) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiEndpoints.noticiaConteos,
+        queryParameters: {
+          if (ramaId != null) 'ramaId': ramaId,
+        },
+      );
+      return NoticiaConteos.fromJson(response.data!);
     } on DioException catch (e) {
       throw _toApiException(e);
     } catch (e) {

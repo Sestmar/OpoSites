@@ -63,7 +63,8 @@ abstract final class ApiEndpoints {
   static String planTareaEliminar(int tareaId)  => '/plan/tarea/$tareaId';
 
   // ── 10. Noticias ─────────────────────────────────────────────────────────
-  static const String noticias = '/noticias';
+  static const String noticias        = '/noticias';
+  static const String noticiaConteos  = '/noticias/conteos';
   static String noticiaDetalle(int id) => '/noticias/$id';
   static String noticiaLeer(int id)    => '/noticias/$id/leer';
 

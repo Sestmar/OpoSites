@@ -1,3 +1,4 @@
+com\oposites\api\model\dto\response\NoticiaConteosResponse.class
 com\oposites\api\model\dto\request\GoogleAuthRequest.class
 com\oposites\api\model\entity\Documento.class
 com\oposites\api\model\entity\Usuario$UsuarioBuilder.class

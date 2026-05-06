@@ -13,36 +13,63 @@ import java.util.Optional;
 
 public interface NoticiaConvocatoriaRepository extends JpaRepository<NoticiaConvocatoria, Long> {
 
-    // Noticias de una rama específica + noticias globales (rama IS NULL), con filtro opcional de tipo
+    // Noticias de una rama específica + noticias globales (rama IS NULL).
+    // Usar cuando ramaId != null. Los conteos de countFiltered usan la misma condición.
     @Query("""
             SELECT n FROM NoticiaConvocatoria n
             WHERE (n.rama.id = :ramaId OR n.rama IS NULL)
               AND n.active = true
               AND n.estadoEditorial = :estado
               AND (:tipo IS NULL OR n.tipo = :tipo)
+              AND (:q IS NULL OR LOWER(n.titulo) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
             ORDER BY n.fechaPublicacion DESC
             """)
     Page<NoticiaConvocatoria> findFiltered(
             @Param("ramaId") Long ramaId,
             @Param("tipo") TipoNoticia tipo,
             @Param("estado") EstadoEditorialNoticia estado,
+            @Param("q") String q,
             Pageable pageable);
 
-    // Solo noticias globales (usuario sin rama principal asignada)
+    // Solo noticias globales (rama IS NULL). Usar cuando ramaId = null ("General").
+    // Los conteos de countGlobalFiltered usan la misma condición.
     @Query("""
             SELECT n FROM NoticiaConvocatoria n
             WHERE n.rama IS NULL
               AND n.active = true
               AND n.estadoEditorial = :estado
               AND (:tipo IS NULL OR n.tipo = :tipo)
+              AND (:q IS NULL OR LOWER(n.titulo) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
             ORDER BY n.fechaPublicacion DESC
             """)
     Page<NoticiaConvocatoria> findGlobalFiltered(
             @Param("tipo") TipoNoticia tipo,
             @Param("estado") EstadoEditorialNoticia estado,
+            @Param("q") String q,
             Pageable pageable);
 
     Optional<NoticiaConvocatoria> findByIdAndActiveTrueAndEstadoEditorial(Long id, EstadoEditorialNoticia estadoEditorial);
+
+    @Query("""
+            SELECT COUNT(n) FROM NoticiaConvocatoria n
+            WHERE (n.rama.id = :ramaId OR n.rama IS NULL)
+              AND n.active = true
+              AND n.estadoEditorial = :estado
+              AND (:tipo IS NULL OR n.tipo = :tipo)
+            """)
+    long countFiltered(@Param("ramaId") Long ramaId,
+                       @Param("estado") EstadoEditorialNoticia estado,
+                       @Param("tipo") TipoNoticia tipo);
+
+    @Query("""
+            SELECT COUNT(n) FROM NoticiaConvocatoria n
+            WHERE n.rama IS NULL
+              AND n.active = true
+              AND n.estadoEditorial = :estado
+              AND (:tipo IS NULL OR n.tipo = :tipo)
+            """)
+    long countGlobalFiltered(@Param("estado") EstadoEditorialNoticia estado,
+                              @Param("tipo") TipoNoticia tipo);
 
     Page<NoticiaConvocatoria> findByEstadoEditorialOrderByFechaPublicacionDesc(
             EstadoEditorialNoticia estadoEditorial,
