@@ -39,7 +39,7 @@ class NoticiasRepository {
         queryParameters: {
           'page': page,
           'size': size,
-          if (tipo != null) 'tipo': tipo.name,
+          if (tipo != null) 'tipo': tipo.name.toUpperCase(),
           if (ramaId != null) 'ramaId': ramaId,
         },
       );

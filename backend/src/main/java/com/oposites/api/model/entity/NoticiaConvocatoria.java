@@ -1,5 +1,6 @@
 package com.oposites.api.model.entity;
 
+import com.oposites.api.model.enums.EstadoEditorialNoticia;
 import com.oposites.api.model.enums.TipoNoticia;
 import jakarta.persistence.*;
 import lombok.*;
@@ -43,6 +44,11 @@ public class NoticiaConvocatoria {
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_editorial", nullable = false, length = 20)
+    @Builder.Default
+    private EstadoEditorialNoticia estadoEditorial = EstadoEditorialNoticia.PUBLICADA;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

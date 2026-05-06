@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/api_exception.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_card.dart';
 import '../data/models/noticia_resumen.dart';
 import '../providers/noticias_provider.dart';
 
@@ -15,7 +19,8 @@ class NoticiasListScreen extends ConsumerStatefulWidget {
   ConsumerState<NoticiasListScreen> createState() => _NoticiasListScreenState();
 }
 
-class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen> {
+class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen>
+    with AutomaticKeepAliveClientMixin {
   final _scrollCtrl = ScrollController();
 
   TipoNoticia? _selectedTipo;
@@ -25,8 +30,13 @@ class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen> {
   void initState() {
     super.initState();
     _scrollCtrl.addListener(_onScroll);
+    final current = ref.read(noticiasListNotifierProvider).valueOrNull;
+    _selectedTipo = current?.filtroTipo;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(noticiasListNotifierProvider.notifier).cargar();
+      if (current == null || current.items.isEmpty) {
+        ref.read(noticiasListNotifierProvider.notifier).cargar(tipo: _selectedTipo);
+      }
     });
   }
 
@@ -56,12 +66,16 @@ class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar más: $e')),
+          SnackBar(content: Text(_userMessage(e))),
         );
       }
     } finally {
       if (mounted) setState(() => _cargandoMas = false);
     }
+  }
+
+  Future<void> _refresh() {
+    return ref.read(noticiasListNotifierProvider.notifier).recargarActual();
   }
 
   // ── Filtros ──────────────────────────────────────────────────────────────────
@@ -81,7 +95,12 @@ class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen> {
   // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final b = Theme.of(context).brightness;
     final state = ref.watch(noticiasListNotifierProvider);
 
     return Scaffold(
@@ -95,24 +114,36 @@ class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen> {
           const Divider(height: 1),
           Expanded(
             child: state.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryFor(b),
+                ),
+              ),
               error: (e, _) => _ErrorBody(
-                message: e.toString(),
+                message: _userMessage(e),
                 onRetry: () => ref
                     .read(noticiasListNotifierProvider.notifier)
-                    .cargar(tipo: _selectedTipo),
+                    .recargarActual(),
+                onRefresh: _refresh,
               ),
               data: (listState) {
                 if (listState.items.isEmpty) {
-                  return const _EmptyBody();
+                  return _EmptyBody(
+                    onRefresh: _refresh,
+                    onClearFilter:
+                        _selectedTipo != null ? () => _applyFilter(null) : null,
+                  );
                 }
-                return _NoticiasList(
-                  items: listState.items,
-                  hayMas: listState.hayMas,
-                  cargandoMas: _cargandoMas,
-                  scrollCtrl: _scrollCtrl,
-                  onTap: _openDetalle,
+                return RefreshIndicator(
+                  color: AppColors.primaryFor(b),
+                  onRefresh: _refresh,
+                  child: _NoticiasList(
+                    items: listState.items,
+                    hayMas: listState.hayMas,
+                    cargandoMas: _cargandoMas,
+                    scrollCtrl: _scrollCtrl,
+                    onTap: _openDetalle,
+                  ),
                 );
               },
             ),
@@ -133,6 +164,7 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -148,6 +180,7 @@ class _FilterRow extends StatelessWidget {
             label: 'Convocatorias',
             isSelected: selected == TipoNoticia.convocatoria,
             color: _tipoColor(TipoNoticia.convocatoria),
+            textColor: AppColors.textFor(b),
             onTap: () => onSelected(TipoNoticia.convocatoria),
           ),
           const SizedBox(width: 8),
@@ -155,6 +188,7 @@ class _FilterRow extends StatelessWidget {
             label: 'Cambios',
             isSelected: selected == TipoNoticia.cambio,
             color: _tipoColor(TipoNoticia.cambio),
+            textColor: AppColors.textFor(b),
             onTap: () => onSelected(TipoNoticia.cambio),
           ),
           const SizedBox(width: 8),
@@ -162,6 +196,7 @@ class _FilterRow extends StatelessWidget {
             label: 'Noticias',
             isSelected: selected == TipoNoticia.noticia,
             color: _tipoColor(TipoNoticia.noticia),
+            textColor: AppColors.textFor(b),
             onTap: () => onSelected(TipoNoticia.noticia),
           ),
         ],
@@ -176,25 +211,36 @@ class _FilterChip extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.color,
+    this.textColor,
   });
 
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
   final Color? color;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     final effectiveColor = color ?? Theme.of(context).colorScheme.primary;
+
     return FilterChip(
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => onTap(),
-      selectedColor: effectiveColor.withOpacity(0.15),
+      backgroundColor: AppColors.surfaceMutedFor(b),
+      selectedColor: effectiveColor.withOpacity(0.16),
       checkmarkColor: effectiveColor,
+      avatar: isSelected ? Icon(Icons.check, size: 16, color: effectiveColor) : null,
+      side: BorderSide(
+        color: isSelected ? effectiveColor : AppColors.borderFor(b),
+      ),
       labelStyle: isSelected
-          ? TextStyle(color: effectiveColor, fontWeight: FontWeight.w600)
-          : null,
+          ? AppText.bodySmall.copyWith(color: effectiveColor, fontWeight: FontWeight.w700)
+          : AppText.bodySmall.copyWith(
+              color: textColor ?? AppColors.textMutedFor(b),
+            ),
     );
   }
 }
@@ -222,13 +268,15 @@ class _NoticiasList extends StatelessWidget {
 
     return ListView.separated(
       controller: scrollCtrl,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       itemCount: itemCount,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         if (index == items.length) {
           // Footer: indicador de carga de más páginas
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             child: Center(
               child: cargandoMas
                   ? const CircularProgressIndicator()
@@ -255,41 +303,66 @@ class _NoticiaResumenTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     final color = _tipoColor(noticia.tipo);
 
-    return ListTile(
-      leading: noticia.leida
-          ? Icon(Icons.check_circle_outline,
-              color: Colors.grey.shade400, size: 20)
-          : Icon(Icons.circle, color: color, size: 10),
-      title: Text(
-        noticia.titulo,
-        style: TextStyle(
-          fontWeight: noticia.leida ? FontWeight.normal : FontWeight.w600,
-          color: noticia.leida ? Colors.grey.shade600 : null,
-        ),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+    return GestureDetector(
+      onTap: onTap,
+      child: AppCard(
+        padding: const EdgeInsets.all(12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TipoBadge(tipo: noticia.tipo),
-            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: noticia.leida
+                  ? Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.textFaintFor(b),
+                      size: 18,
+                    )
+                  : Icon(Icons.circle, color: color, size: 10),
+            ),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                noticia.fechaPublicacion,
-                style: TextStyle(
-                    fontSize: 11, color: Colors.grey.shade500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    noticia.titulo,
+                    style: AppText.cardTitle.copyWith(
+                      color: noticia.leida
+                          ? AppColors.textMutedFor(b)
+                          : AppColors.textFor(b),
+                      fontWeight:
+                          noticia.leida ? FontWeight.w500 : FontWeight.w700,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _TipoBadge(tipo: noticia.tipo),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _formatFecha(noticia.fechaPublicacion),
+                          style: AppText.caption.copyWith(
+                            color: AppColors.textFaintFor(b),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-      onTap: onTap,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
     );
   }
 }
@@ -303,18 +376,18 @@ class _TipoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     final color = _tipoColor(tipo);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withOpacity(b == Brightness.dark ? 0.22 : 0.14),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         _tipoLabel(tipo),
-        style: TextStyle(
+        style: AppText.label.copyWith(
           fontSize: 10,
-          fontWeight: FontWeight.w600,
           color: color,
         ),
       ),
@@ -323,9 +396,9 @@ class _TipoBadge extends StatelessWidget {
 }
 
 Color _tipoColor(TipoNoticia tipo) => switch (tipo) {
-      TipoNoticia.convocatoria => Colors.deepPurple,
-      TipoNoticia.cambio => Colors.orange,
-      TipoNoticia.noticia => Colors.blue,
+      TipoNoticia.convocatoria => AppColors.accentWarm,
+      TipoNoticia.cambio => AppColors.accentRose,
+      TipoNoticia.noticia => AppColors.primary,
     };
 
 String _tipoLabel(TipoNoticia tipo) => switch (tipo) {
@@ -337,53 +410,138 @@ String _tipoLabel(TipoNoticia tipo) => switch (tipo) {
 // ── Estados vacío y error ──────────────────────────────────────────────────────
 
 class _EmptyBody extends StatelessWidget {
-  const _EmptyBody();
+  const _EmptyBody({
+    required this.onRefresh,
+    this.onClearFilter,
+  });
+
+  final Future<void> Function() onRefresh;
+  final VoidCallback? onClearFilter;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.newspaper_outlined, size: 56, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(
-              'No hay noticias para estos filtros.',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
+    final b = Theme.of(context).brightness;
+    return RefreshIndicator(
+      color: AppColors.primaryFor(b),
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        children: [
+          const SizedBox(height: 72),
+          AppCard.large(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.newspaper_outlined,
+                  size: 44,
+                  color: AppColors.textFaintFor(b),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No hay noticias para este filtro.',
+                  style: AppText.cardTitle.copyWith(
+                    color: AppColors.textFor(b),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Prueba a refrescar o ver todas las categorías.',
+                  style: AppText.bodySmall.copyWith(
+                    color: AppColors.textMutedFor(b),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (onClearFilter != null) ...[
+                  const SizedBox(height: 14),
+                  OutlinedButton.icon(
+                    onPressed: onClearFilter,
+                    icon: const Icon(Icons.filter_alt_off_outlined),
+                    label: const Text('Ver todas'),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _ErrorBody extends StatelessWidget {
-  const _ErrorBody({required this.message, required this.onRetry});
+  const _ErrorBody({
+    required this.message,
+    required this.onRetry,
+    required this.onRefresh,
+  });
 
   final String message;
   final VoidCallback onRetry;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            OutlinedButton(
-                onPressed: onRetry, child: const Text('Reintentar')),
-          ],
-        ),
+    final b = Theme.of(context).brightness;
+    return RefreshIndicator(
+      color: AppColors.primaryFor(b),
+      onRefresh: onRefresh,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        children: [
+          const SizedBox(height: 72),
+          AppCard.large(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.wifi_off_outlined,
+                  size: 44,
+                  color: AppColors.textFaintFor(b),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No se pudieron cargar las noticias',
+                  style: AppText.cardTitle.copyWith(
+                    color: AppColors.textFor(b),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  message,
+                  style: AppText.bodySmall.copyWith(
+                    color: AppColors.textMutedFor(b),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton(
+                  onPressed: onRetry,
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+/// Muestra solo la fecha si la hora es 00:00, o fecha + hora si tiene hora real.
+/// Entrada esperada: "dd/MM/yyyy HH:mm" (formato del backend).
+String _formatFecha(String fechaPublicacion) {
+  if (fechaPublicacion.endsWith('00:00')) {
+    return fechaPublicacion.substring(0, 10); // "dd/MM/yyyy"
+  }
+  return fechaPublicacion;
+}
+
+String _userMessage(Object error) {
+  if (error is ApiException) {
+    return error.message;
+  }
+  return 'Ha ocurrido un error. Inténtalo de nuevo.';
 }

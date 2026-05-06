@@ -10,6 +10,7 @@ import com.oposites.api.model.entity.NoticiaLeida;
 import com.oposites.api.model.entity.NoticiaLeidaId;
 import com.oposites.api.model.entity.RamaOposicion;
 import com.oposites.api.model.entity.Usuario;
+import com.oposites.api.model.enums.EstadoEditorialNoticia;
 import com.oposites.api.model.enums.TipoNoticia;
 import com.oposites.api.repository.NoticiaConvocatoriaRepository;
 import com.oposites.api.repository.NoticiaLeidaRepository;
@@ -44,15 +45,16 @@ public class NoticiaService {
         Set<Long> leidasIds = noticiaLeidaRepository.findNoticiaIdsByUsuarioId(usuario.getId());
 
         Page<NoticiaConvocatoria> page = efectivoRamaId != null
-                ? noticiaRepository.findFiltered(efectivoRamaId, tipo, pageable)
-                : noticiaRepository.findGlobalFiltered(tipo, pageable);
+                ? noticiaRepository.findFiltered(efectivoRamaId, tipo, EstadoEditorialNoticia.PUBLICADA, pageable)
+                : noticiaRepository.findGlobalFiltered(tipo, EstadoEditorialNoticia.PUBLICADA, pageable);
 
         return page.map(n -> toResumenResponse(n, leidasIds.contains(n.getId())));
     }
 
     public NoticiaResponse getDetalle(Long id, String email) {
         Usuario usuario = findUsuario(email);
-        NoticiaConvocatoria noticia = noticiaRepository.findByIdAndActiveTrue(id)
+        NoticiaConvocatoria noticia = noticiaRepository
+                .findByIdAndActiveTrueAndEstadoEditorial(id, EstadoEditorialNoticia.PUBLICADA)
                 .orElseThrow(() -> new AppException("Noticia no encontrada", HttpStatus.NOT_FOUND));
 
         boolean leida = noticiaLeidaRepository.existsById(new NoticiaLeidaId(id, usuario.getId()));
@@ -62,7 +64,8 @@ public class NoticiaService {
     @Transactional
     public void marcarLeida(Long id, String email) {
         Usuario usuario = findUsuario(email);
-        NoticiaConvocatoria noticia = noticiaRepository.findByIdAndActiveTrue(id)
+        NoticiaConvocatoria noticia = noticiaRepository
+                .findByIdAndActiveTrueAndEstadoEditorial(id, EstadoEditorialNoticia.PUBLICADA)
                 .orElseThrow(() -> new AppException("Noticia no encontrada", HttpStatus.NOT_FOUND));
 
         NoticiaLeidaId leidaId = new NoticiaLeidaId(id, usuario.getId());
@@ -88,6 +91,7 @@ public class NoticiaService {
                 .urlExterna(request.getUrlExterna())
                 .tipo(request.getTipo())
                 .fechaPublicacion(request.getFechaPublicacion())
+                .estadoEditorial(EstadoEditorialNoticia.PUBLICADA)
                 .build();
 
         return toResponse(noticiaRepository.save(noticia), false);
@@ -114,6 +118,24 @@ public class NoticiaService {
             throw new AppException("Noticia no encontrada", HttpStatus.NOT_FOUND);
         }
         noticiaRepository.deleteById(id);
+    }
+
+    public Page<NoticiaResponse> listarBorradores(Pageable pageable) {
+        return noticiaRepository
+                .findByEstadoEditorialOrderByFechaPublicacionDesc(EstadoEditorialNoticia.BORRADOR, pageable)
+                .map(n -> toResponse(n, false));
+    }
+
+    @Transactional
+    public NoticiaResponse actualizarEstadoEditorial(Long id, EstadoEditorialNoticia estadoEditorial) {
+        if (estadoEditorial == EstadoEditorialNoticia.BORRADOR) {
+            throw new AppException("Estado no permitido para esta operación", HttpStatus.BAD_REQUEST);
+        }
+
+        NoticiaConvocatoria noticia = noticiaRepository.findById(id)
+                .orElseThrow(() -> new AppException("Noticia no encontrada", HttpStatus.NOT_FOUND));
+        noticia.setEstadoEditorial(estadoEditorial);
+        return toResponse(noticiaRepository.save(noticia), false);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -154,6 +176,7 @@ public class NoticiaService {
                 .nombreRama(n.getRama() != null ? n.getRama().getNombre() : null)
                 .fechaPublicacion(n.getFechaPublicacion().format(FORMATTER))
                 .leida(leida)
+                .estadoEditorial(n.getEstadoEditorial())
                 .build();
     }
 }

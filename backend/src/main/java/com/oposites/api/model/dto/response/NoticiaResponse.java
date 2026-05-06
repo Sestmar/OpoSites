@@ -1,5 +1,6 @@
 package com.oposites.api.model.dto.response;
 
+import com.oposites.api.model.enums.EstadoEditorialNoticia;
 import com.oposites.api.model.enums.TipoNoticia;
 import lombok.Builder;
 import lombok.Data;
@@ -17,4 +18,5 @@ public class NoticiaResponse {
     private String nombreRama;
     private String fechaPublicacion; // formato dd/MM/yyyy HH:mm
     private boolean leida;
+    private EstadoEditorialNoticia estadoEditorial;
 }

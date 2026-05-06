@@ -1,5 +1,6 @@
 package com.oposites.api.controller;
 
+import com.oposites.api.exception.AppException;
 import com.oposites.api.model.dto.response.NoticiaResumenResponse;
 import com.oposites.api.model.dto.response.NoticiaResponse;
 import com.oposites.api.model.enums.TipoNoticia;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,12 +26,19 @@ public class NoticiaController {
     @GetMapping
     public ResponseEntity<Page<NoticiaResumenResponse>> listar(
             @AuthenticationPrincipal UserDetails user,
-            @RequestParam(required = false) TipoNoticia tipo,
+            @RequestParam(required = false) String tipo,
             @RequestParam(required = false) Long ramaId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        final TipoNoticia tipoNoticia;
+        try {
+            tipoNoticia = TipoNoticia.fromQueryParam(tipo);
+        } catch (IllegalArgumentException ex) {
+            throw new AppException("Parámetro inválido: tipo", HttpStatus.BAD_REQUEST);
+        }
+
         return ResponseEntity.ok(noticiaService.listarNoticias(
-                user.getUsername(), ramaId, tipo, PageRequest.of(page, size)));
+                user.getUsername(), ramaId, tipoNoticia, PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")

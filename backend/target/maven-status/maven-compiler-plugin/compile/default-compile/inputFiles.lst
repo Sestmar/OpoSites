@@ -1,6 +1,7 @@
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\config\ChatConfig.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\config\CorsConfig.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\config\OpenApiConfig.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\config\RestClientConfig.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\AdminNoticiaController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\AdminPreguntaController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\AdminRamaController.java
@@ -42,6 +43,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\RegisterRequest.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\ResponderTestRequest.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\RespuestaDto.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\UpdateEstadoNoticiaRequest.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\UpdateEventoRequest.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\UpdateNoticiaRequest.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\request\UpdatePerfilRequest.java
@@ -86,6 +88,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Documento.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\DocumentoTest.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\DocumentoTestPregunta.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\FuenteNoticia.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\MaterialGenerado.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\NoticiaConvocatoria.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\NoticiaLeida.java
@@ -99,10 +102,12 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Tema.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\TestSession.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Usuario.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\EstadoEditorialNoticia.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\EstadoSession.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\PreferenciaPlan.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\Role.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\TipoEvento.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\TipoFuenteNoticia.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\TipoMaterial.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\TipoNoticia.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\enums\TipoPlanTarea.java
@@ -115,6 +120,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\ChatMensajeRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\DocumentoRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\DocumentoTestRepository.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\FuenteNoticiaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\MaterialGeneradoRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\NoticiaConvocatoriaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\NoticiaLeidaRepository.java
@@ -140,6 +146,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\DocumentoService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\DocumentoTestService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\FileStorageService.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\NoticiaIngestionService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\NoticiaService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\PlanService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\PreguntaService.java

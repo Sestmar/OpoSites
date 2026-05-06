@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/api_exception.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_card.dart';
 import '../data/models/noticia.dart';
 import '../data/models/noticia_resumen.dart';
 import '../providers/noticias_provider.dart';
@@ -24,6 +28,8 @@ class NoticiaDetalleScreen extends ConsumerStatefulWidget {
 
 class _NoticiaDetalleScreenState
     extends ConsumerState<NoticiaDetalleScreen> {
+  bool _autoMarkIntentado = false;
+
   @override
   void initState() {
     super.initState();
@@ -48,32 +54,36 @@ class _NoticiaDetalleScreenState
 
   Future<void> _abrirEnlace(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (uri == null) {
+      _showSnack('El enlace no es válido.');
+      return;
     }
+    if (await canLaunchUrl(uri)) {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) _showSnack('No se pudo abrir el enlace.');
+      return;
+    }
+    _showSnack('No se pudo abrir el enlace.');
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     final state = ref.watch(noticiaDetalleNotifierProvider);
 
-    // Auto-marcar como leída la primera vez que llegan los datos.
-    ref.listen<AsyncValue<Noticia?>>(noticiaDetalleNotifierProvider,
-        (_, next) {
-      next.whenData((noticia) {
-        if (noticia != null && !noticia.leida) {
-          _marcarLeida();
-        }
-      });
-    });
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle')),
+      appBar: AppBar(title: const Text('Noticia')),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppColors.primaryFor(b)),
+        ),
         error: (e, _) => _ErrorBody(
-          message: e.toString(),
+          message: _userMessage(e),
           onRetry: () => ref
               .read(noticiaDetalleNotifierProvider.notifier)
               .cargar(widget.id),
@@ -81,6 +91,10 @@ class _NoticiaDetalleScreenState
         data: (noticia) {
           if (noticia == null) {
             return const Center(child: CircularProgressIndicator());
+          }
+          if (!noticia.leida && !_autoMarkIntentado) {
+            _autoMarkIntentado = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) => _marcarLeida());
           }
           return _NoticiaContent(
             noticia: noticia,
@@ -110,85 +124,92 @@ class _NoticiaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Cabecera ──
-          Row(
-            children: [
-              _TipoBadge(tipo: noticia.tipo),
-              if (noticia.leida) ...[
-                const SizedBox(width: 8),
-                _LeidaBadge(),
+      padding: const EdgeInsets.all(16),
+      child: AppCard.large(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Cabecera ──
+            Row(
+              children: [
+                _TipoBadge(tipo: noticia.tipo),
+                if (noticia.leida) ...[
+                  const SizedBox(width: 8),
+                  _LeidaBadge(),
+                ],
               ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              noticia.titulo,
+              style: AppText.h2.copyWith(color: AppColors.textFor(b)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              noticia.fechaPublicacion,
+              style: AppText.bodySmall.copyWith(
+                color: AppColors.textMutedFor(b),
+              ),
+            ),
+            if (noticia.nombreRama != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                noticia.nombreRama!,
+                style: AppText.bodySmall.copyWith(
+                  color: AppColors.primaryFor(b),
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            noticia.titulo,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            noticia.fechaPublicacion,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-          ),
-          if (noticia.nombreRama != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              noticia.nombreRama!,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 13),
-            ),
-          ],
 
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+            Divider(color: AppColors.borderFor(b), height: 1),
+            const SizedBox(height: 16),
 
-          // ── Contenido ──
-          if (noticia.contenido != null && noticia.contenido!.isNotEmpty)
-            Text(
-              noticia.contenido!,
-              style: const TextStyle(fontSize: 15, height: 1.6),
-            )
-          else
-            Text(
-              'Esta noticia no tiene contenido textual.',
-              style: TextStyle(color: Colors.grey.shade500),
-            ),
-
-          const SizedBox(height: 24),
-
-          // ── Acciones ──
-          if (onAbrirEnlace != null)
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: onAbrirEnlace,
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('Abrir enlace oficial'),
+            // ── Contenido ──
+            if (noticia.contenido != null && noticia.contenido!.isNotEmpty)
+              Text(
+                noticia.contenido!,
+                style: AppText.body.copyWith(
+                  color: AppColors.textFor(b),
+                  height: 1.55,
+                ),
+              )
+            else
+              Text(
+                'Esta noticia no tiene contenido textual.',
+                style: AppText.bodySmall.copyWith(
+                  color: AppColors.textMutedFor(b),
+                ),
               ),
-            ),
 
-          if (onMarcarLeida != null) ...[
-            if (onAbrirEnlace != null) const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onMarcarLeida,
-                icon: const Icon(Icons.check),
-                label: const Text('Marcar como leída'),
+            const SizedBox(height: 22),
+
+            // ── Acciones ──
+            if (onAbrirEnlace != null)
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: onAbrirEnlace,
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Abrir enlace oficial'),
+                ),
               ),
-            ),
+
+            if (onMarcarLeida != null) ...[
+              if (onAbrirEnlace != null) const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onMarcarLeida,
+                  icon: const Icon(Icons.check),
+                  label: const Text('Marcar como leída'),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -203,18 +224,18 @@ class _TipoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     final color = _tipoColor(tipo);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withOpacity(b == Brightness.dark ? 0.22 : 0.14),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         _tipoLabel(tipo),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+        style: AppText.bodySmall.copyWith(
+          fontWeight: FontWeight.w700,
           color: color,
         ),
       ),
@@ -225,23 +246,23 @@ class _TipoBadge extends StatelessWidget {
 class _LeidaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.12),
+        color: AppColors.accentMintSoftFor(b),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check, size: 12, color: Colors.green),
+          const Icon(Icons.check, size: 12, color: AppColors.accentMint),
           const SizedBox(width: 4),
-          const Text(
+          Text(
             'Leída',
-            style: TextStyle(
-              fontSize: 12,
+            style: AppText.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
-              color: Colors.green,
+              color: AppColors.accentMint,
             ),
           ),
         ],
@@ -260,15 +281,31 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(
+              Icons.wifi_off_outlined,
+              size: 48,
+              color: AppColors.textFaintFor(b),
+            ),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(
+              'No se pudo cargar la noticia',
+              textAlign: TextAlign.center,
+              style: AppText.cardTitle.copyWith(color: AppColors.textFor(b)),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style:
+                  AppText.bodySmall.copyWith(color: AppColors.textMutedFor(b)),
+            ),
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onRetry,
@@ -284,9 +321,9 @@ class _ErrorBody extends StatelessWidget {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 Color _tipoColor(TipoNoticia tipo) => switch (tipo) {
-      TipoNoticia.convocatoria => Colors.deepPurple,
-      TipoNoticia.cambio => Colors.orange,
-      TipoNoticia.noticia => Colors.blue,
+      TipoNoticia.convocatoria => AppColors.accentWarm,
+      TipoNoticia.cambio => AppColors.accentRose,
+      TipoNoticia.noticia => AppColors.primary,
     };
 
 String _tipoLabel(TipoNoticia tipo) => switch (tipo) {
@@ -294,3 +331,10 @@ String _tipoLabel(TipoNoticia tipo) => switch (tipo) {
       TipoNoticia.cambio => 'Cambio',
       TipoNoticia.noticia => 'Noticia',
     };
+
+String _userMessage(Object error) {
+  if (error is ApiException) {
+    return error.message;
+  }
+  return 'Ha ocurrido un error. Inténtalo de nuevo.';
+}

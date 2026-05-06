@@ -13,7 +13,7 @@ import com.oposites.api.model.entity.ChatMensaje;
 import com.oposites.api.model.entity.RamaOposicion;
 import com.oposites.api.model.entity.Tema;
 import com.oposites.api.model.entity.Usuario;
-import com.oposites.api.model.enums.TipoNoticia;
+import com.oposites.api.model.enums.EstadoEditorialNoticia;
 import com.oposites.api.repository.ChatConversacionRepository;
 import com.oposites.api.repository.ChatMensajeRepository;
 import com.oposites.api.repository.NoticiaConvocatoriaRepository;
@@ -178,7 +178,7 @@ public class ChatIAService {
         Pageable top5 = PageRequest.of(0, MAX_CONVOCATORIAS);
         if (usuario.getRamaPrincipalId() != null) {
             convocatorias = noticiaRepository
-                    .findFiltered(usuario.getRamaPrincipalId(), null, top5)
+                    .findFiltered(usuario.getRamaPrincipalId(), null, EstadoEditorialNoticia.PUBLICADA, top5)
                     .getContent()
                     .stream()
                     .map(n -> "[%s] %s: %s".formatted(
@@ -190,7 +190,7 @@ public class ChatIAService {
                     .toList();
         } else {
             convocatorias = noticiaRepository
-                    .findGlobalFiltered(null, top5)
+                    .findGlobalFiltered(null, EstadoEditorialNoticia.PUBLICADA, top5)
                     .getContent()
                     .stream()
                     .map(n -> "[%s] %s: %s".formatted(

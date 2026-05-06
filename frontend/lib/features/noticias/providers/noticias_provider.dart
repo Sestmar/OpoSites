@@ -83,6 +83,15 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
     });
   }
 
+  /// Recarga respetando los filtros actuales.
+  Future<void> recargarActual() async {
+    final current = state.valueOrNull;
+    await cargar(
+      tipo: current?.filtroTipo,
+      ramaId: current?.filtroRamaId,
+    );
+  }
+
   /// Carga la siguiente página y añade los ítems al final de la lista.
   ///
   /// No-op si ya no hay más páginas o si el estado actual no tiene datos.

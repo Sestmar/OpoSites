@@ -9,6 +9,7 @@ com\oposites\api\repository\NoticiaConvocatoriaRepository.class
 com\oposites\api\controller\UsuarioController.class
 com\oposites\api\model\dto\response\EvolucionSemanalDto$EvolucionSemanalDtoBuilder.class
 com\oposites\api\model\entity\Simulacro.class
+com\oposites\api\service\NoticiaIngestionService$IngestionResult.class
 com\oposites\api\model\dto\response\EnviarMensajeResponse$EnviarMensajeResponseBuilder.class
 com\oposites\api\service\AuthService.class
 com\oposites\api\model\dto\response\RamaResponse$RamaResponseBuilder.class
@@ -30,6 +31,7 @@ com\oposites\api\security\CustomUserDetailsService.class
 com\oposites\api\repository\ChatConversacionRepository.class
 com\oposites\api\model\dto\request\GenerarTestRequest.class
 com\oposites\api\model\dto\response\ResultadoTestResponse.class
+com\oposites\api\model\enums\TipoFuenteNoticia.class
 com\oposites\api\model\enums\TipoPlanTarea.class
 com\oposites\api\model\dto\response\EventoResponse$EventoResponseBuilder.class
 com\oposites\api\service\DocumentoService$1.class
@@ -44,6 +46,7 @@ com\oposites\api\model\dto\response\PreguntaResponse$PreguntaResponseBuilder.cla
 com\oposites\api\model\entity\ChatConversacion.class
 com\oposites\api\model\enums\TipoSession.class
 com\oposites\api\controller\ChatController.class
+com\oposites\api\service\NoticiaIngestionService$1.class
 com\oposites\api\model\entity\Simulacro$SimulacroBuilder.class
 com\oposites\api\repository\RamaOposicionRepository.class
 com\oposites\api\model\dto\response\PlanConfiguracionResponse.class
@@ -67,10 +70,12 @@ com\oposites\api\model\dto\response\SimulacroResponse.class
 com\oposites\api\model\dto\request\UpdatePerfilRequest.class
 com\oposites\api\model\entity\ProgresoUsuario.class
 com\oposites\api\service\TestService.class
+com\oposites\api\config\RestClientConfig.class
 com\oposites\api\model\dto\response\UsuarioResponse.class
 com\oposites\api\model\enums\Role.class
 com\oposites\api\service\TokenService.class
 com\oposites\api\model\entity\DocumentoTestPregunta.class
+com\oposites\api\repository\FuenteNoticiaRepository.class
 com\oposites\api\model\entity\MaterialGenerado$MaterialGeneradoBuilder.class
 com\oposites\api\model\entity\TestSession.class
 com\oposites\api\model\dto\response\RachaResponse.class
@@ -90,6 +95,7 @@ com\oposites\api\model\dto\response\NoticiaResumenResponse.class
 com\oposites\api\model\dto\response\DocumentoTestPreguntaResponse.class
 com\oposites\api\controller\AdminNoticiaController.class
 com\oposites\api\repository\CalendarioEventoRepository.class
+com\oposites\api\model\dto\request\UpdateEstadoNoticiaRequest.class
 com\oposites\api\service\CalendarioService.class
 com\oposites\api\model\dto\response\PlanHoyResponse.class
 com\oposites\api\controller\AdminPreguntaController.class
@@ -112,6 +118,7 @@ com\oposites\api\model\dto\response\MensajeResponse.class
 com\oposites\api\model\dto\request\CreatePlanTareaRequest.class
 com\oposites\api\model\dto\response\DocumentoResponse$DocumentoResponseBuilder.class
 com\oposites\api\model\entity\NoticiaConvocatoria.class
+com\oposites\api\model\entity\FuenteNoticia$FuenteNoticiaBuilder.class
 com\oposites\api\model\converter\JsonStringListConverter.class
 com\oposites\api\model\dto\response\PlanTareaResponse.class
 com\oposites\api\model\dto\request\CreateTemaRequest.class
@@ -121,7 +128,9 @@ com\oposites\api\model\converter\JsonLongListConverter$1.class
 com\oposites\api\model\enums\PreferenciaPlan.class
 com\oposites\api\model\dto\response\PlanHoyResponse$PlanHoyResponseBuilder.class
 com\oposites\api\security\SecurityConfig.class
+com\oposites\api\model\enums\EstadoEditorialNoticia.class
 com\oposites\api\validation\StrongPasswordValidator.class
+com\oposites\api\service\NoticiaIngestionService.class
 com\oposites\api\model\dto\response\ResultadoPreguntaDto$ResultadoPreguntaDtoBuilder.class
 com\oposites\api\service\SimulacroService.class
 com\oposites\api\model\dto\response\ResultadoPreguntaDto.class
@@ -129,6 +138,7 @@ com\oposites\api\security\JwtFilter.class
 com\oposites\api\exception\AppException.class
 com\oposites\api\model\chat\ConversacionContexto$ConversacionContextoBuilder.class
 com\oposites\api\model\entity\PlanTarea$PlanTareaBuilder.class
+com\oposites\api\config\RestClientConfig$1.class
 com\oposites\api\model\dto\request\GenerarMaterialRequest.class
 com\oposites\api\model\dto\response\UsuarioResponse$UsuarioResponseBuilder.class
 com\oposites\api\model\entity\NoticiaLeidaId.class
@@ -150,6 +160,7 @@ com\oposites\api\service\PlanService$1.class
 com\oposites\api\model\entity\ChatMensaje.class
 com\oposites\api\repository\TemaRepository.class
 com\oposites\api\model\dto\request\UpdateNoticiaRequest.class
+com\oposites\api\model\entity\FuenteNoticia.class
 com\oposites\api\repository\TestSessionRepository.class
 com\oposites\api\controller\AuthController.class
 com\oposites\api\model\dto\response\DocumentoTestResponse.class
@@ -193,6 +204,7 @@ com\oposites\api\model\entity\DocumentoTest$DocumentoTestBuilder.class
 com\oposites\api\model\dto\request\RespuestaDto.class
 com\oposites\api\controller\TemaController.class
 com\oposites\api\model\dto\request\CreatePreguntaRequest.class
+com\oposites\api\service\NoticiaIngestionService$IngestedItem.class
 com\oposites\api\model\dto\response\TemaDebilDto.class
 com\oposites\api\controller\DocumentoTestController.class
 com\oposites\api\model\enums\EstadoSession.class
