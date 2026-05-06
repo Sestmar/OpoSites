@@ -14,6 +14,8 @@ public interface PlanTareaRepository extends JpaRepository<PlanTarea, Long> {
 
     List<PlanTarea> findByUsuarioIdAndFechaOrderByCreatedAtAsc(Long usuarioId, LocalDate fecha);
 
+    List<PlanTarea> findByUsuarioIdAndFechaBetweenOrderByFechaAscCreatedAtAsc(Long usuarioId, LocalDate desde, LocalDate hasta);
+
     Optional<PlanTarea> findByIdAndUsuarioId(Long id, Long usuarioId);
 
     boolean existsByUsuarioIdAndFecha(Long usuarioId, LocalDate fecha);

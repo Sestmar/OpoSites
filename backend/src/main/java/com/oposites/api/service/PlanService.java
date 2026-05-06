@@ -99,15 +99,36 @@ public class PlanService {
         return toPlanHoyResponse(hoy, tareas);
     }
 
+    public List<PlanHoyResponse> getSemana(String email, LocalDate desde) {
+        Usuario usuario = findUsuario(email);
+        LocalDate hasta = desde.plusDays(6);
+
+        // Asegurar que los 7 días estén generados
+        generarYPersistirSemana(usuario, desde);
+
+        List<PlanTarea> tareas = planTareaRepository
+                .findByUsuarioIdAndFechaBetweenOrderByFechaAscCreatedAtAsc(usuario.getId(), desde, hasta);
+
+        // Agrupar por fecha y construir una respuesta por día
+        return desde.datesUntil(hasta.plusDays(1))
+                .map(dia -> {
+                    List<PlanTarea> del_dia = tareas.stream()
+                            .filter(t -> t.getFecha().equals(dia))
+                            .toList();
+                    return toPlanHoyResponse(dia, del_dia);
+                })
+                .toList();
+    }
+
     @Transactional
     public PlanTareaResponse crearTareaManual(String email, CreatePlanTareaRequest request) {
         Usuario usuario = findUsuario(email);
-        LocalDate hoy = LocalDate.now();
+        LocalDate fecha = request.getFecha() != null ? request.getFecha() : LocalDate.now();
 
         PlanTarea tarea = PlanTarea.builder()
                 .usuario(usuario)
                 .tipo(request.getTipo())
-                .fecha(hoy)
+                .fecha(fecha)
                 .manual(true)
                 .descripcion(request.getDescripcion())
                 .build();

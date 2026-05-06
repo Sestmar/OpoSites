@@ -5,10 +5,13 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
-import '../../../core/widgets/pressable.dart';
 import '../data/models/plan_hoy.dart';
 import '../data/models/plan_tarea.dart';
-import '../providers/plan_provider.dart';
+import '../providers/plan_semana_provider.dart';
+
+// ── Constantes ─────────────────────────────────────────────────────────────────
+
+const _dayAbbr = ['', 'L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 // ── Pantalla principal ─────────────────────────────────────────────────────────
 
@@ -26,14 +29,17 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(planHoyNotifierProvider.notifier).load();
+      // Dispara la carga de la semana si aún no tiene datos
+      ref.read(planSemanaProvider.future).ignore();
     });
   }
 
   Future<void> _completarTarea(PlanTarea tarea) async {
     setState(() => _loadingTaskId = tarea.id);
     try {
-      await ref.read(planHoyNotifierProvider.notifier).completarTarea(tarea.id);
+      await ref
+          .read(planSemanaProvider.notifier)
+          .completarTarea(tarea.id);
     } catch (e) {
       if (mounted) _showError(_msgError(e));
     } finally {
@@ -43,7 +49,7 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
 
   Future<void> _eliminarTarea(PlanTarea tarea) async {
     try {
-      await ref.read(planHoyNotifierProvider.notifier).eliminarTarea(tarea.id);
+      await ref.read(planSemanaProvider.notifier).eliminarTarea(tarea.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tarea eliminada')),
@@ -54,11 +60,11 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
     }
   }
 
-  Future<void> _regenerarPlan() async {
-    await ref.read(planHoyNotifierProvider.notifier).regenerarPlan();
+  Future<void> _reload() async {
+    await ref.read(planSemanaProvider.notifier).reload();
   }
 
-  Future<void> _mostrarAddTarea() async {
+  Future<void> _mostrarAddTarea(DateTime fechaDia) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -69,13 +75,14 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
         onGuardar: (tipo, descripcion) async {
           Navigator.of(ctx).pop();
           try {
-            await ref.read(planHoyNotifierProvider.notifier).crearTarea(
+            await ref.read(planSemanaProvider.notifier).crearTarea(
                   tipo: tipo,
                   descripcion: descripcion,
+                  fecha: fechaDia,
                 );
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tarea añadida al plan')),
+                const SnackBar(content: Text('Tarea añadida')),
               );
             }
           } catch (e) {
@@ -98,44 +105,68 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(planHoyNotifierProvider);
+    final state = ref.watch(planSemanaProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plan de hoy'),
-        actions: [
-          IconButton(
-            tooltip: 'Regenerar plan',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: state.isLoading ? null : _regenerarPlan,
-          ),
-        ],
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       ),
-      floatingActionButton: state.hasValue && state.value != null
-          ? FloatingActionButton.extended(
-              onPressed: _mostrarAddTarea,
-              icon: const Icon(Icons.add),
-              label: const Text('Añadir tarea'),
-            )
-          : null,
-      body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorBody(
+      error: (e, _) => Scaffold(
+        appBar: AppBar(title: const Text('Plan de estudio')),
+        body: _ErrorBody(
           message: _msgError(e),
-          onRetry: () => ref.read(planHoyNotifierProvider.notifier).load(),
+          onRetry: _reload,
         ),
-        data: (plan) {
-          if (plan == null || plan.tareas.isEmpty) {
-            return _EmptyBody(onRegenerar: _regenerarPlan);
-          }
-          return _PlanBody(
-            plan: plan,
-            loadingTaskId: _loadingTaskId,
-            onCompletar: _completarTarea,
-            onEliminar: _eliminarTarea,
-          );
-        },
       ),
+      data: (semana) {
+        final dia = semana.diaSeleccionado;
+        final fechaDia = dia != null ? _parseDate(dia.fecha) : DateTime.now();
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Plan de estudio'),
+            actions: [
+              IconButton(
+                tooltip: 'Recargar',
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: _reload,
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _mostrarAddTarea(fechaDia),
+            icon: const Icon(Icons.add),
+            label: const Text('Añadir tarea'),
+          ),
+          body: Column(
+            children: [
+              // ── Barra de navegación de días ──────────────────────────────
+              _DayNavBar(
+                dias: semana.dias,
+                selectedIndex: semana.diaSeleccionadoIndex,
+                onSelectDia: (i) =>
+                    ref.read(planSemanaProvider.notifier).seleccionarDia(i),
+              ),
+              const Divider(height: 1),
+
+              // ── Contenido del día seleccionado ───────────────────────────
+              Expanded(
+                child: dia == null || dia.tareas.isEmpty
+                    ? _EmptyDayBody(
+                        fecha: fechaDia,
+                        onAddTarea: () => _mostrarAddTarea(fechaDia),
+                      )
+                    : _PlanBody(
+                        plan: dia,
+                        loadingTaskId: _loadingTaskId,
+                        onCompletar: _completarTarea,
+                        onEliminar: _eliminarTarea,
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -145,6 +176,134 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
 String _msgError(Object e) {
   if (e is ApiException) return e.message;
   return 'Ocurrió un error inesperado. Intentalo de nuevo.';
+}
+
+DateTime _parseDate(String fecha) {
+  final parts = fecha.split('-');
+  return DateTime(
+    int.parse(parts[0]),
+    int.parse(parts[1]),
+    int.parse(parts[2]),
+  );
+}
+
+// ── Barra de navegación de días ────────────────────────────────────────────────
+
+class _DayNavBar extends StatelessWidget {
+  const _DayNavBar({
+    required this.dias,
+    required this.selectedIndex,
+    required this.onSelectDia,
+  });
+
+  final List<PlanHoy> dias;
+  final int selectedIndex;
+  final ValueChanged<int> onSelectDia;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+
+    return SizedBox(
+      height: 72,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        itemCount: dias.length,
+        itemBuilder: (_, i) {
+          final dia = dias[i];
+          final fecha = _parseDate(dia.fecha);
+          final isSelected = i == selectedIndex;
+          final isToday = _isToday(fecha);
+          final progreso = dia.totalTareas == 0
+              ? 0.0
+              : dia.tareasCompletadas / dia.totalTareas;
+          final completado = dia.totalTareas > 0 &&
+              dia.tareasCompletadas == dia.totalTareas;
+
+          final teal = AppColors.primaryFor(b);
+          final labelColor = isSelected
+              ? teal
+              : AppColors.textMutedFor(b);
+          final bgColor = isSelected
+              ? teal.withOpacity(0.12)
+              : Colors.transparent;
+
+          return GestureDetector(
+            onTap: () => onSelectDia(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 48,
+              margin: const EdgeInsets.only(right: 4),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(12),
+                border: isSelected
+                    ? Border.all(color: teal.withOpacity(0.4), width: 1.5)
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Abreviatura del día
+                  Text(
+                    _dayAbbr[fecha.weekday],
+                    style: AppText.label.copyWith(
+                      color: labelColor,
+                      fontWeight: isToday
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  // Número del día
+                  Text(
+                    '${fecha.day}',
+                    style: AppText.body.copyWith(
+                      color: isSelected
+                          ? teal
+                          : AppColors.textFor(b),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Indicador de progreso
+                  if (dia.totalTareas > 0)
+                    SizedBox(
+                      width: 24,
+                      height: 3,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: progreso,
+                          backgroundColor: AppColors.borderFor(b),
+                          valueColor: AlwaysStoppedAnimation(
+                            completado
+                                ? teal
+                                : teal.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 3),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  bool _isToday(DateTime fecha) {
+    final now = DateTime.now();
+    return fecha.year == now.year &&
+        fecha.month == now.month &&
+        fecha.day == now.day;
+  }
 }
 
 // ── Cuerpo con datos ───────────────────────────────────────────────────────────
@@ -172,7 +331,7 @@ class _PlanBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
-        // ── Barra de progreso del día ──────────────────────────────────────
+        // ── Tarjeta de progreso del día ────────────────────────────────────
         AppCard(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -181,11 +340,13 @@ class _PlanBody extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(plan.fecha,
-                      style: AppText.cardTitle
-                          .copyWith(color: AppColors.textFor(b))),
                   Text(
-                    '$completadas / $total',
+                    _labelFecha(_parseDate(plan.fecha)),
+                    style: AppText.cardTitle
+                        .copyWith(color: AppColors.textFor(b)),
+                  ),
+                  Text(
+                    '$completadas / $total tareas',
                     style: AppText.body.copyWith(
                       color: AppColors.textMutedFor(b),
                       fontWeight: FontWeight.w700,
@@ -206,14 +367,14 @@ class _PlanBody extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.check_circle_rounded,
-                        size: 16,
-                        color: AppColors.primaryFor(b)),
+                        size: 16, color: AppColors.primaryFor(b)),
                     const SizedBox(width: 6),
                     Text(
-                      '¡Plan de hoy completado!',
+                      '¡Día completado!',
                       style: AppText.bodySmall.copyWith(
-                          color: AppColors.primaryFor(b),
-                          fontWeight: FontWeight.w600),
+                        color: AppColors.primaryFor(b),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -224,9 +385,10 @@ class _PlanBody extends StatelessWidget {
         const SizedBox(height: 16),
 
         // ── Lista de tareas ────────────────────────────────────────────────
-        Text('TAREAS DE HOY',
-            style:
-                AppText.label.copyWith(color: AppColors.textMutedFor(b))),
+        Text(
+          'TAREAS',
+          style: AppText.label.copyWith(color: AppColors.textMutedFor(b)),
+        ),
         const SizedBox(height: 10),
         ...plan.tareas.map(
           (t) => Padding(
@@ -241,6 +403,33 @@ class _PlanBody extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _labelFecha(DateTime fecha) {
+    final now = DateTime.now();
+    if (fecha.year == now.year &&
+        fecha.month == now.month &&
+        fecha.day == now.day) return 'Hoy';
+    final tomorrow = now.add(const Duration(days: 1));
+    if (fecha.year == tomorrow.year &&
+        fecha.month == tomorrow.month &&
+        fecha.day == tomorrow.day) return 'Mañana';
+    const meses = [
+      '',
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic'
+    ];
+    return '${fecha.day} ${meses[fecha.month]}';
   }
 }
 
@@ -270,15 +459,18 @@ class _TareaTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── Ícono de estado ──────────────────────────────────────────────
-          Icon(
-            completada
-                ? Icons.check_circle_rounded
-                : Icons.radio_button_unchecked,
-            color: completada
-                ? AppColors.primaryFor(b)
-                : AppColors.textFaintFor(b),
-            size: 22,
+          // ── Ícono de estado ────────────────────────────────────────────────
+          GestureDetector(
+            onTap: completada ? null : onCompletar,
+            child: Icon(
+              completada
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked,
+              color: completada
+                  ? AppColors.primaryFor(b)
+                  : AppColors.textFaintFor(b),
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
 
@@ -320,8 +512,8 @@ class _TareaTile extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         'manual',
-                        style: AppText.caption.copyWith(
-                            color: AppColors.textFaintFor(b)),
+                        style: AppText.caption
+                            .copyWith(color: AppColors.textFaintFor(b)),
                       ),
                     ],
                   ],
@@ -396,12 +588,11 @@ class _AccionesTarea extends StatelessWidget {
           child: Row(
             children: [
               Icon(Icons.delete_outline,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.error),
+                  size: 18, color: Theme.of(context).colorScheme.error),
               const SizedBox(width: 8),
               Text('Eliminar',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.error)),
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.error)),
             ],
           ),
         ),
@@ -439,7 +630,6 @@ class _AddTareaSheetState extends State<_AddTareaSheet> {
       _tipo,
       _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
     );
-    // El sheet ya se cerró desde el padre
   }
 
   @override
@@ -457,7 +647,6 @@ class _AddTareaSheetState extends State<_AddTareaSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Handle ────────────────────────────────────────────────────────
           Center(
             child: Container(
               width: 40,
@@ -469,16 +658,12 @@ class _AddTareaSheetState extends State<_AddTareaSheet> {
             ),
           ),
           const SizedBox(height: 20),
-
-          Text('Añadir tarea al plan',
-              style:
-                  AppText.h2.copyWith(color: AppColors.textFor(b))),
+          Text('Añadir tarea',
+              style: AppText.h2.copyWith(color: AppColors.textFor(b))),
           const SizedBox(height: 20),
-
-          // ── Tipo ──────────────────────────────────────────────────────────
           Text('TIPO',
-              style: AppText.label
-                  .copyWith(color: AppColors.textMutedFor(b))),
+              style:
+                  AppText.label.copyWith(color: AppColors.textMutedFor(b))),
           const SizedBox(height: 8),
           SegmentedButton<TipoPlanTarea>(
             segments: const [
@@ -500,16 +685,14 @@ class _AddTareaSheetState extends State<_AddTareaSheet> {
             ],
             selected: {_tipo},
             onSelectionChanged: (s) => setState(() => _tipo = s.first),
-            style: ButtonStyle(
+            style: const ButtonStyle(
               visualDensity: VisualDensity.compact,
             ),
           ),
           const SizedBox(height: 20),
-
-          // ── Descripción ───────────────────────────────────────────────────
           Text('DESCRIPCIÓN (OPCIONAL)',
-              style: AppText.label
-                  .copyWith(color: AppColors.textMutedFor(b))),
+              style:
+                  AppText.label.copyWith(color: AppColors.textMutedFor(b))),
           const SizedBox(height: 8),
           TextField(
             controller: _descCtrl,
@@ -522,16 +705,14 @@ class _AddTareaSheetState extends State<_AddTareaSheet> {
             ),
           ),
           const SizedBox(height: 24),
-
-          // ── Botón guardar ─────────────────────────────────────────────────
           FilledButton(
             onPressed: _saving ? null : _guardar,
             child: _saving
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child:
-                        CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : const Text('Añadir tarea'),
           ),
@@ -541,16 +722,18 @@ class _AddTareaSheetState extends State<_AddTareaSheet> {
   }
 }
 
-// ── Estados vacío y error ──────────────────────────────────────────────────────
+// ── Día sin tareas ─────────────────────────────────────────────────────────────
 
-class _EmptyBody extends StatelessWidget {
-  const _EmptyBody({required this.onRegenerar});
+class _EmptyDayBody extends StatelessWidget {
+  const _EmptyDayBody({required this.fecha, required this.onAddTarea});
 
-  final VoidCallback onRegenerar;
+  final DateTime fecha;
+  final VoidCallback onAddTarea;
 
   @override
   Widget build(BuildContext context) {
     final b = Theme.of(context).brightness;
+    final isToday = _isToday(fecha);
 
     return Center(
       child: Padding(
@@ -562,28 +745,38 @@ class _EmptyBody extends StatelessWidget {
                 size: 64, color: AppColors.textFaintFor(b)),
             const SizedBox(height: 20),
             Text(
-              'No hay tareas para hoy',
+              isToday ? 'No hay tareas para hoy' : 'Sin tareas este día',
               style: AppText.h2.copyWith(color: AppColors.textFor(b)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
-              'Generá tu plan automático o añadí tareas manualmente con el botón "+".',
+              'Podés añadir tareas manualmente con el botón "+".',
               textAlign: TextAlign.center,
-              style: AppText.body.copyWith(color: AppColors.textMutedFor(b)),
+              style:
+                  AppText.body.copyWith(color: AppColors.textMutedFor(b)),
             ),
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onRegenerar,
-              icon: const Icon(Icons.auto_awesome_outlined),
-              label: const Text('Generar plan automático'),
+            OutlinedButton.icon(
+              onPressed: onAddTarea,
+              icon: const Icon(Icons.add),
+              label: const Text('Añadir tarea'),
             ),
           ],
         ),
       ),
     );
   }
+
+  bool _isToday(DateTime fecha) {
+    final now = DateTime.now();
+    return fecha.year == now.year &&
+        fecha.month == now.month &&
+        fecha.day == now.day;
+  }
 }
+
+// ── Error ──────────────────────────────────────────────────────────────────────
 
 class _ErrorBody extends StatelessWidget {
   const _ErrorBody({required this.message, required this.onRetry});
@@ -606,7 +799,8 @@ class _ErrorBody extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No se pudo cargar el plan',
-              style: AppText.cardTitle.copyWith(color: AppColors.textFor(b)),
+              style:
+                  AppText.cardTitle.copyWith(color: AppColors.textFor(b)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),

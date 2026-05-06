@@ -56,6 +56,7 @@ abstract final class ApiEndpoints {
 
   // ── 9. Plan de estudio ───────────────────────────────────────────────────
   static const String planHoy           = '/plan/hoy';
+  static const String planSemana        = '/plan/semana';
   static const String planConfiguracion = '/plan/configuracion';
   static const String planGenerar       = '/plan/generar';
   static const String planTarea         = '/plan/tarea';

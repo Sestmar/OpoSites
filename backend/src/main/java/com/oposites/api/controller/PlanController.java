@@ -9,10 +9,14 @@ import com.oposites.api.model.dto.response.PlanTareaResponse;
 import com.oposites.api.service.PlanService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "Plan", description = "Plan de estudio diario: tareas de hoy, configuración y completado")
 @RestController
@@ -26,6 +30,14 @@ public class PlanController {
     public ResponseEntity<PlanHoyResponse> getPlanHoy(
             @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(planService.getPlanHoy(user.getUsername()));
+    }
+
+    @GetMapping("/semana")
+    public ResponseEntity<List<PlanHoyResponse>> getSemana(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde) {
+        LocalDate inicio = desde != null ? desde : LocalDate.now();
+        return ResponseEntity.ok(planService.getSemana(user.getUsername(), inicio));
     }
 
     @GetMapping("/configuracion")

@@ -8,7 +8,8 @@ import 'models/plan_tarea.dart';
 
 /// Único punto de acceso a los endpoints de plan de estudio.
 ///
-///   GET  /api/v1/plan/hoy                     → [getPlanHoy]
+///   GET  /api/v1/plan/hoy                      → [getPlanHoy]
+///   GET  /api/v1/plan/semana?desde=YYYY-MM-DD  → [getSemana]
 ///   GET  /api/v1/plan/configuracion            → [getConfiguracion]
 ///   PUT  /api/v1/plan/configuracion            → [actualizarConfiguracion]
 ///   POST /api/v1/plan/generar                  → [regenerarPlan]
@@ -29,6 +30,26 @@ class PlanRepository {
         ApiEndpoints.planHoy,
       );
       return PlanHoy.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
+  /// Plan de 7 días a partir de [desde] (inclusive). Si [desde] es null, usa hoy.
+  ///
+  /// El backend garantiza que los 7 días están generados antes de responder.
+  Future<List<PlanHoy>> getSemana({DateTime? desde}) async {
+    try {
+      final desdeStr = (desde ?? DateTime.now()).toIso8601String().substring(0, 10);
+      final response = await _dio.get<List<dynamic>>(
+        ApiEndpoints.planSemana,
+        queryParameters: {'desde': desdeStr},
+      );
+      return (response.data!)
+          .map((e) => PlanHoy.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw _toApiException(e);
     } catch (e) {
@@ -69,18 +90,21 @@ class PlanRepository {
     }
   }
 
-  /// Crea una tarea manual para hoy y la devuelve.
+  /// Crea una tarea manual. Si [fecha] es null, el backend usa el día actual.
   Future<PlanTarea> crearTarea({
     required TipoPlanTarea tipo,
     String? descripcion,
+    DateTime? fecha,
   }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.planTarea,
         data: {
-          'tipo': tipo.name,
+          'tipo': tipo.name.toUpperCase(),
           if (descripcion != null && descripcion.isNotEmpty)
             'descripcion': descripcion,
+          if (fecha != null)
+            'fecha': fecha.toIso8601String().substring(0, 10),
         },
       );
       return PlanTarea.fromJson(response.data!);
