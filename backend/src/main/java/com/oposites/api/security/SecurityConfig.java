@@ -1,5 +1,6 @@
 package com.oposites.api.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,6 +58,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // El resto requiere autenticación
                         .anyRequest().authenticated()
+                )
+                // Las rutas /api/** devuelven 401 en vez de redirigir al login OAuth2.
+                // Esto evita que Spring Security redirija requests de la app móvil al flujo web.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, e) -> {
+                            if (request.getRequestURI().startsWith("/api/")) {
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                            } else {
+                                response.sendRedirect("/oauth2/authorization/google");
+                            }
+                        })
                 )
                 // Flujo OAuth2 web para el panel admin Angular.
                 // El flujo móvil (Flutter) usa POST /api/v1/auth/google.
