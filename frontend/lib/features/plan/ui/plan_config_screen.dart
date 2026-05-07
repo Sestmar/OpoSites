@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_card.dart';
 import '../data/models/plan_configuracion.dart';
 import '../providers/plan_provider.dart';
 
@@ -148,87 +151,138 @@ class _ConfigForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
       children: [
-        // ── Horas por semana ──
-        Text(
-          'Horas de estudio por semana',
-          style: Theme.of(context).textTheme.labelLarge,
+        // ── Horas de estudio ──────────────────────────────────────────
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'HORAS DE ESTUDIO',
+                style: AppText.label
+                    .copyWith(color: AppColors.textMutedFor(b)),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '¿Cuántas horas por semana podés dedicar?',
+                style: AppText.caption
+                    .copyWith(color: AppColors.textFaintFor(b)),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: horasSemanaCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(
+                  hintText: 'Ej: 10',
+                  suffixText: 'h / semana',
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: horasSemanaCtrl,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Ej: 10',
-            suffixText: 'h/semana',
+        const SizedBox(height: 12),
+
+        // ── Preferencia de estudio ────────────────────────────────────
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PREFERENCIA',
+                style: AppText.label
+                    .copyWith(color: AppColors.textMutedFor(b)),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '¿Qué tipo de tareas querés que priorice el plan?',
+                style: AppText.caption
+                    .copyWith(color: AppColors.textFaintFor(b)),
+              ),
+              const SizedBox(height: 12),
+              SegmentedButton<PreferenciaPlan>(
+                segments: const [
+                  ButtonSegment(
+                    value: PreferenciaPlan.mixto,
+                    label: Text('Mixto'),
+                    icon: Icon(Icons.auto_awesome_outlined),
+                  ),
+                  ButtonSegment(
+                    value: PreferenciaPlan.test,
+                    label: Text('Tests'),
+                    icon: Icon(Icons.quiz_outlined),
+                  ),
+                  ButtonSegment(
+                    value: PreferenciaPlan.teoria,
+                    label: Text('Teoría'),
+                    icon: Icon(Icons.menu_book_outlined),
+                  ),
+                ],
+                selected: {preferencia},
+                onSelectionChanged: (s) => onPreferenciaChanged(s.first),
+                style: const ButtonStyle(
+                    visualDensity: VisualDensity.compact),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Fecha del examen ──────────────────────────────────────────
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'FECHA DEL EXAMEN',
+                style: AppText.label
+                    .copyWith(color: AppColors.textMutedFor(b)),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Opcional. Usamos esta fecha para ajustar la intensidad del plan.',
+                style: AppText.caption
+                    .copyWith(color: AppColors.textFaintFor(b)),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: fechaExamenCtrl,
+                decoration: InputDecoration(
+                  hintText: 'AAAA-MM-DD',
+                  suffixIcon: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 18,
+                    color: AppColors.textFaintFor(b),
+                  ),
+                ),
+              ),
+              if (diasHastaExamen != null && diasHastaExamen! > 0) ...[
+                const SizedBox(height: 10),
+                Text(
+                  diasHastaExamen! <= 30
+                      ? 'Quedan $diasHastaExamen días — modo intensivo activo.'
+                      : 'Quedan $diasHastaExamen días para el examen.',
+                  style: AppText.caption.copyWith(
+                    color: diasHastaExamen! <= 30
+                        ? AppColors.accentWarmSoftFor(b)
+                        : AppColors.primaryFor(b),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         const SizedBox(height: 24),
 
-        // ── Preferencia ──
-        Text(
-          'Preferencia de estudio',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<PreferenciaPlan>(
-          value: preferencia,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-          items: const [
-            DropdownMenuItem(
-              value: PreferenciaPlan.mixto,
-              child: Text('Mixto (Test + Repaso)'),
-            ),
-            DropdownMenuItem(
-              value: PreferenciaPlan.test,
-              child: Text('Solo Tests'),
-            ),
-            DropdownMenuItem(
-              value: PreferenciaPlan.teoria,
-              child: Text('Solo Teoría'),
-            ),
-          ],
-          onChanged: onPreferenciaChanged,
-        ),
-        const SizedBox(height: 24),
-
-        // ── Fecha del examen ──
-        Text(
-          'Fecha objetivo del examen',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Formato YYYY-MM-DD. Dejá en blanco si no tenés fecha definida.',
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: fechaExamenCtrl,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Ej: 2026-09-15',
-          ),
-        ),
-        if (diasHastaExamen != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Quedan $diasHastaExamen días para el examen.',
-            style: TextStyle(
-              color: diasHastaExamen! <= 30
-                  ? Colors.orange
-                  : Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-        const SizedBox(height: 32),
-
-        // ── Botón guardar ──
+        // ── Guardar ───────────────────────────────────────────────────
         FilledButton(
           onPressed: isSaving ? null : onGuardar,
           child: isSaving
@@ -236,9 +290,7 @@ class _ConfigForm extends StatelessWidget {
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                      strokeWidth: 2, color: Colors.white),
                 )
               : const Text('Guardar cambios'),
         ),
@@ -257,19 +309,35 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(Icons.cloud_off_outlined,
+                size: 52, color: AppColors.textFaintFor(b)),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            OutlinedButton(
+            Text(
+              'No se pudo cargar la configuración',
+              style: AppText.cardTitle
+                  .copyWith(color: AppColors.textFor(b)),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              style:
+                  AppText.caption.copyWith(color: AppColors.textMutedFor(b)),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
               onPressed: onRetry,
-              child: const Text('Reintentar'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
             ),
           ],
         ),

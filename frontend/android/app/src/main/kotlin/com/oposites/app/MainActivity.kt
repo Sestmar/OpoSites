@@ -1,4 +1,4 @@
-package com.example.oposites
+package com.oposites.app
 
 import io.flutter.embedding.android.FlutterActivity
 

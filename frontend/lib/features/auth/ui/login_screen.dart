@@ -221,6 +221,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
 
+                        // Separador ──────────────────────────────────────────
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Divider(color: _kBorder, thickness: 0.5),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'o',
+                                style: TextStyle(
+                                  color: _kTextMuted,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            const Expanded(
+                              child: Divider(color: _kBorder, thickness: 0.5),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Google ─────────────────────────────────────────────
+                        OutlinedButton.icon(
+                          onPressed: isLoading
+                              ? null
+                              : () => ref
+                                  .read(authProvider.notifier)
+                                  .loginWithGoogle(),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: _kBorder),
+                            backgroundColor: _kSurface,
+                            foregroundColor: _kTextPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                          ),
+                          icon: const _GoogleIcon(),
+                          label: const Text(
+                            'Continuar con Google',
+                            style: TextStyle(
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
                         // Registro ───────────────────────────────────────────
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -313,6 +361,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         borderSide: BorderSide(
           color: Theme.of(context).colorScheme.error,
           width: 1.5,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Icono "G" de Google ────────────────────────────────────────────────────────
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFF4285F4),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'G',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1,
         ),
       ),
     );

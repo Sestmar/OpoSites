@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/api/api_exception.dart';
 import '../../auth/providers/auth_provider.dart' show dioProvider;
 import '../data/chat_repository.dart';
 import '../data/models/chat_conversacion.dart';
@@ -26,20 +27,30 @@ class ChatState {
     required this.conversacion,
     this.iaEscribiendo = false,
     this.errorUltimoMensaje,
+    this.esRateLimit = false,
+    this.textoFallido,
   });
 
   final ChatConversacion conversacion;
 
-  /// true mientras esperamos la respuesta de Gemini.
+  /// true mientras esperamos la respuesta de la IA.
   final bool iaEscribiendo;
 
   /// Mensaje de error del último envío fallido (null si no hubo error).
   final String? errorUltimoMensaje;
 
+  /// true si el error fue un 429 (rate limit de Groq).
+  final bool esRateLimit;
+
+  /// Texto del mensaje que falló — usado por reintentar().
+  final String? textoFallido;
+
   ChatState copyWith({
     ChatConversacion? conversacion,
     bool? iaEscribiendo,
     String? errorUltimoMensaje,
+    bool? esRateLimit,
+    String? textoFallido,
     bool clearError = false,
   }) =>
       ChatState(
@@ -47,6 +58,8 @@ class ChatState {
         iaEscribiendo: iaEscribiendo ?? this.iaEscribiendo,
         errorUltimoMensaje:
             clearError ? null : (errorUltimoMensaje ?? this.errorUltimoMensaje),
+        esRateLimit: clearError ? false : (esRateLimit ?? this.esRateLimit),
+        textoFallido: clearError ? null : (textoFallido ?? this.textoFallido),
       );
 }
 
@@ -205,14 +218,27 @@ class ChatNotifier extends _$ChatNotifier {
       final mensajesSinOptimista = stateActual.conversacion.mensajes
           .where((m) => m.id != -1)
           .toList();
+      final esRateLimit = e is RateLimitException;
 
       state = AsyncData(stateActual.copyWith(
         conversacion: stateActual.conversacion
             .copyWith(mensajes: mensajesSinOptimista),
         iaEscribiendo: false,
-        errorUltimoMensaje: e.toString(),
+        errorUltimoMensaje:
+            e is ApiException ? e.message : 'Ocurrió un error inesperado.',
+        esRateLimit: esRateLimit,
+        textoFallido: esRateLimit ? texto : null,
       ));
     }
+  }
+
+  /// Reenvía el último mensaje que falló por rate limit.
+  Future<void> reintentar() async {
+    final current = state.valueOrNull;
+    final texto = current?.textoFallido;
+    if (texto == null) return;
+    state = AsyncData(current!.copyWith(clearError: true));
+    await enviarMensaje(texto);
   }
 
   /// Limpia el error del último mensaje fallido.

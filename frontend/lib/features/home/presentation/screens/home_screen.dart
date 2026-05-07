@@ -9,9 +9,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/providers/usuario_provider.dart';
 import '../../../plan/providers/plan_provider.dart';
+import '../../../plan/providers/plan_semana_provider.dart';
 import '../../../progreso/data/models/progreso_resumen.dart';
 import '../../../progreso/providers/progreso_provider.dart';
 import '../../../progreso/data/models/racha.dart';
+import '../../../noticias/providers/noticias_provider.dart';
 import '../../ui/widgets/ai_suggestion_card.dart';
 import '../../ui/widgets/continue_card.dart';
 import '../../ui/widgets/greeting_section.dart';
@@ -38,7 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     Future.microtask(() {
-      ref.read(planHoyNotifierProvider.notifier).load();
+      ref.read(planSemanaProvider.future).ignore();
       ref.read(rachaNotifierProvider.notifier).load();
       ref.read(progresoResumenNotifierProvider.notifier).load();
     });
@@ -62,10 +64,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final b = Theme.of(context).brightness;
 
-    final planState = ref.watch(planHoyNotifierProvider);
+    final planState = ref.watch(planSemanaProvider).whenData(
+          (s) => s.dias.isNotEmpty ? s.dias.first : null,
+        );
     final racha = ref.watch(rachaNotifierProvider).valueOrNull;
     final resumen = ref.watch(progresoResumenNotifierProvider).valueOrNull;
     final userAsync = ref.watch(currentUserProvider);
+    final noLeidas = ref.watch(noticiaConteosProvider(null)).valueOrNull?.noLeidas;
 
     final diasHastaExamen = _diasHastaExamen(
       userAsync.valueOrNull?.fechaExamenObjetivo,
@@ -108,7 +113,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   planState: planState,
                   onTap: () => context.push(AppRoutes.planHoy),
                   onRetry: () =>
-                      ref.read(planHoyNotifierProvider.notifier).load(),
+                      ref.read(planSemanaProvider.notifier).reload(),
                 ),
                 const SizedBox(height: 12),
 
@@ -148,6 +153,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onCalendario: () => context.push(AppRoutes.calendario),
                   onNoticias: () => context.push(AppRoutes.noticias),
                   onChat: () => context.push(AppRoutes.chat),
+                  noticiasBadge: noLeidas,
                 ),
               ]),
             ),

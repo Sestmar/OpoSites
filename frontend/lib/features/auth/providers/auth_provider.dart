@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/api/api_client.dart';
@@ -168,6 +169,44 @@ class Auth extends _$Auth {
   /// Actualiza el estado para que el router redirija al home.
   void ramaSelected(int ramaId) {
     state = AuthAuthenticated(ramaPrincipalId: ramaId);
+  }
+
+  /// Inicia sesión con Google.
+  ///
+  /// Obtiene el idToken de Google Sign-In y lo envía al backend /auth/google.
+  /// En éxito guarda los tokens y transiciona a [AuthAuthenticated].
+  /// En error (usuario cancela o falla la red) transiciona a [AuthError].
+  Future<void> loginWithGoogle() async {
+    state = const AuthLoading();
+    try {
+      final googleUser = await GoogleSignIn(
+        serverClientId:
+            '473420233111-1suhv1oaa0oodikcrt3mpgafg4dnhfic.apps.googleusercontent.com',
+      ).signIn();
+      if (googleUser == null) {
+        // El usuario canceló el selector de cuentas
+        state = const AuthUnauthenticated();
+        return;
+      }
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        state = const AuthError('No se pudo obtener el token de Google.');
+        return;
+      }
+      final response =
+          await ref.read(authRepositoryProvider).loginWithGoogle(idToken);
+      await ref.read(secureStorageProvider).saveTokens(
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+          );
+      final me = await ref.read(authRepositoryProvider).getMe();
+      state = AuthAuthenticated(ramaPrincipalId: me.ramaPrincipalId);
+    } on ApiException catch (e) {
+      state = AuthError(e.message);
+    } catch (_) {
+      state = const AuthError('No se pudo iniciar sesión con Google.');
+    }
   }
 
   /// Limpia el error para que la UI pueda mostrar el formulario de nuevo.

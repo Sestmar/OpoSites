@@ -98,15 +98,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         final error = next.valueOrNull?.errorUltimoMensaje;
         final prevError = prev?.valueOrNull?.errorUltimoMensaje;
         if (error != null && error != prevError && mounted) {
+          final esRateLimit = next.valueOrNull?.esRateLimit ?? false;
+          final notifier =
+              ref.read(chatNotifierProvider(widget.conversacionId).notifier);
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(SnackBar(
-              content: const Text('No se pudo enviar el mensaje'),
+              content: Text(
+                esRateLimit
+                    ? 'La IA está ocupada. Esperá unos segundos.'
+                    : 'No se pudo enviar el mensaje.',
+              ),
+              duration: Duration(seconds: esRateLimit ? 6 : 4),
               action: SnackBarAction(
-                label: 'OK',
-                onPressed: () => ref
-                    .read(chatNotifierProvider(widget.conversacionId).notifier)
-                    .limpiarError(),
+                label: esRateLimit ? 'Reintentar' : 'OK',
+                onPressed: esRateLimit
+                    ? () => notifier.reintentar()
+                    : () => notifier.limpiarError(),
               ),
             ));
         }

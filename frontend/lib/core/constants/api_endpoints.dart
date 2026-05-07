@@ -9,7 +9,7 @@
 abstract final class ApiEndpoints {
   // 10.0.2.2 = localhost del host para emulador Android.
   // Para web/Windows desktop usar 'http://localhost:8080/api/v1'.
-  static const String baseUrl = 'http://localhost:8080/api/v1';
+  static const String baseUrl = 'http://192.168.1.133:8080/api/v1';
 
   // ── 1. Auth ──────────────────────────────────────────────────────────────
   static const String register    = '/auth/register';

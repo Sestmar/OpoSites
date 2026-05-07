@@ -36,9 +36,12 @@ class PerfilRepository {
 
   /// Sube una nueva foto de perfil como multipart/form-data.
   /// Devuelve el perfil actualizado con la nueva [fotoPerfilUrl].
+  ///
+  /// Usa [readAsBytes] en lugar de [fromFile] para compatibilidad con Flutter Web.
   Future<UsuarioMe> uploadFoto(XFile foto) async {
+    final bytes = await foto.readAsBytes();
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(foto.path, filename: foto.name),
+      'file': MultipartFile.fromBytes(bytes, filename: foto.name),
     });
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.meFoto,

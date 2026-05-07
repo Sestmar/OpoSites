@@ -10,4 +10,5 @@ public class NoticiaConteosResponse {
     private long convocatorias;
     private long cambios;
     private long noticias;
+    private long noLeidas;
 }

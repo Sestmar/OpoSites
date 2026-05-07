@@ -202,5 +202,7 @@ class NoticiaDetalleNotifier extends _$NoticiaDetalleNotifier {
     if (current != null) {
       state = AsyncData(current.copyWithLeida(true));
     }
+    // Invalida el provider de conteos para que el badge en Home se actualice.
+    ref.invalidate(noticiaConteosProvider);
   }
 }

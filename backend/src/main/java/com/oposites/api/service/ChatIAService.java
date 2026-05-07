@@ -128,6 +128,11 @@ public class ChatIAService {
                     .call()
                     .content();
         } catch (Exception e) {
+            if (esErrorRateLimit(e)) {
+                throw new AppException(
+                        "La IA está ocupada. Esperá unos segundos y volvé a intentarlo.",
+                        HttpStatus.TOO_MANY_REQUESTS);
+            }
             throw new AppException(
                     "El servicio de IA no está disponible en este momento. Inténtalo de nuevo.",
                     HttpStatus.SERVICE_UNAVAILABLE);
@@ -288,6 +293,22 @@ public class ChatIAService {
     private Usuario findUsuario(String email) {
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException("Usuario no encontrado", HttpStatus.NOT_FOUND));
+    }
+
+    // ─── Helpers internos ────────────────────────────────────────────────────
+
+    private static boolean esErrorRateLimit(Exception e) {
+        return contieneRateLimit(e.getMessage())
+                || (e.getCause() != null && contieneRateLimit(e.getCause().getMessage()));
+    }
+
+    private static boolean contieneRateLimit(String msg) {
+        if (msg == null) return false;
+        String lower = msg.toLowerCase();
+        return lower.contains("429")
+                || lower.contains("rate limit")
+                || lower.contains("too many requests")
+                || lower.contains("too_many");
     }
 
     // ─── Mapping ──────────────────────────────────────────────────────────────

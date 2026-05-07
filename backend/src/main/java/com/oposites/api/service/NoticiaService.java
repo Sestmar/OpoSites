@@ -98,24 +98,28 @@ public class NoticiaService {
      * No hay fallback a la rama principal del usuario: el frontend envía siempre el ramaId
      * explícito del chip seleccionado para garantizar coherencia entre lista y conteos.
      */
-    public NoticiaConteosResponse getConteos(Long ramaId) {
-        // ramaId null → "General": solo globales (rama IS NULL)
-        // ramaId = X  → rama X + globales (n.rama.id = X OR n.rama IS NULL)
+    public NoticiaConteosResponse getConteos(String email, Long ramaId) {
+        Usuario usuario = findUsuario(email);
+
+        long todas, convocatorias, cambios, noticias, leidas;
         if (ramaId != null) {
-            return new NoticiaConteosResponse(
-                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, null),
-                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CONVOCATORIA),
-                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CAMBIO),
-                    noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.NOTICIA)
-            );
+            // rama X + globales — misma lógica que findFiltered
+            todas         = noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, null);
+            convocatorias = noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CONVOCATORIA);
+            cambios       = noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CAMBIO);
+            noticias      = noticiaRepository.countFiltered(ramaId, EstadoEditorialNoticia.PUBLICADA, TipoNoticia.NOTICIA);
+            leidas        = noticiaLeidaRepository.countLeidasFiltradas(usuario.getId(), ramaId, EstadoEditorialNoticia.PUBLICADA);
         } else {
-            return new NoticiaConteosResponse(
-                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, null),
-                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CONVOCATORIA),
-                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CAMBIO),
-                    noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.NOTICIA)
-            );
+            // solo globales — misma lógica que findGlobalFiltered
+            todas         = noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, null);
+            convocatorias = noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CONVOCATORIA);
+            cambios       = noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.CAMBIO);
+            noticias      = noticiaRepository.countGlobalFiltered(EstadoEditorialNoticia.PUBLICADA, TipoNoticia.NOTICIA);
+            leidas        = noticiaLeidaRepository.countLeidasGlobal(usuario.getId(), EstadoEditorialNoticia.PUBLICADA);
         }
+
+        long noLeidas = Math.max(0, todas - leidas);
+        return new NoticiaConteosResponse(todas, convocatorias, cambios, noticias, noLeidas);
     }
 
     // ─── CRUD admin ────────────────────────────────────────────────────────────

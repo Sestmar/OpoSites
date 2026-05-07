@@ -3,12 +3,14 @@ class NoticiaConteos {
   final int convocatorias;
   final int cambios;
   final int noticias;
+  final int noLeidas;
 
   const NoticiaConteos({
     required this.todas,
     required this.convocatorias,
     required this.cambios,
     required this.noticias,
+    required this.noLeidas,
   });
 
   factory NoticiaConteos.fromJson(Map<String, dynamic> json) => NoticiaConteos(
@@ -16,6 +18,7 @@ class NoticiaConteos {
         convocatorias: (json['convocatorias'] as num).toInt(),
         cambios: (json['cambios'] as num).toInt(),
         noticias: (json['noticias'] as num).toInt(),
+        noLeidas: (json['noLeidas'] as num? ?? 0).toInt(),
       );
 
   static const empty = NoticiaConteos(
@@ -23,5 +26,6 @@ class NoticiaConteos {
     convocatorias: 0,
     cambios: 0,
     noticias: 0,
+    noLeidas: 0,
   );
 }

@@ -7,16 +7,19 @@ import '../../../../core/widgets/pressable.dart';
 /// Sección "También disponible" — lista quiet con iconos neutros y dividers.
 ///
 /// Muestra accesos de segundo nivel: Calendario, Noticias y Chat IA.
+/// [noticiasBadge] — si > 0, muestra un badge con el conteo en la fila de Noticias.
 class QuietListSection extends StatelessWidget {
   final VoidCallback onCalendario;
   final VoidCallback onNoticias;
   final VoidCallback onChat;
+  final int? noticiasBadge;
 
   const QuietListSection({
     super.key,
     required this.onCalendario,
     required this.onNoticias,
     required this.onChat,
+    this.noticiasBadge,
   });
 
   @override
@@ -47,6 +50,7 @@ class QuietListSection extends StatelessWidget {
           icon: Icons.newspaper_outlined,
           title: 'Noticias y convocatorias',
           subtitle: 'Últimas actualizaciones',
+          badge: noticiasBadge,
           onTap: onNoticias,
         ),
         _QuietTile(
@@ -69,6 +73,7 @@ class _QuietTile extends StatelessWidget {
   final String subtitle;
   final bool isFirst;
   final bool isLast;
+  final int? badge;
   final VoidCallback onTap;
 
   const _QuietTile({
@@ -78,6 +83,7 @@ class _QuietTile extends StatelessWidget {
     required this.onTap,
     this.isFirst = false,
     this.isLast = false,
+    this.badge,
   });
 
   @override
@@ -136,6 +142,13 @@ class _QuietTile extends StatelessWidget {
                   ),
                 ),
 
+                // Badge (solo si hay no leídas)
+                if (badge != null && badge! > 0) ...[
+                  const SizedBox(width: 8),
+                  _BadgeCount(count: badge!, brightness: b),
+                  const SizedBox(width: 4),
+                ],
+
                 // Chevron
                 Icon(
                   Icons.chevron_right,
@@ -153,6 +166,38 @@ class _QuietTile extends StatelessWidget {
             color: AppColors.borderFor(b),
           ),
       ],
+    );
+  }
+}
+
+// ── Badge de conteo ───────────────────────────────────────────────────────────
+
+class _BadgeCount extends StatelessWidget {
+  const _BadgeCount({required this.count, required this.brightness});
+
+  final int count;
+  final Brightness brightness;
+
+  String get _label => count <= 99 ? '$count' : '99+';
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = AppColors.primaryFor(brightness);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: teal.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        _label,
+        style: AppText.label.copyWith(
+          color: teal,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }

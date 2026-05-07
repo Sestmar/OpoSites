@@ -100,7 +100,7 @@ class PlanRepository {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.planTarea,
         data: {
-          'tipo': tipo.name.toUpperCase(),
+          'tipo': tipo.name,
           if (descripcion != null && descripcion.isNotEmpty)
             'descripcion': descripcion,
           if (fecha != null)

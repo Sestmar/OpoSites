@@ -139,6 +139,7 @@ class ChatRepository {
       401 => const UnauthorizedException(),
       403 => const ForbiddenException(),
       404 => NotFoundException(message),
+      429 => RateLimitException(message),
       _ => ServerException(message, code),
     };
   }

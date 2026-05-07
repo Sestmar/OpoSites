@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "473420233111",
+    "project_id": "oposites-b298f",
+    "storage_bucket": "oposites-b298f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:473420233111:android:99893fb02a2909c06eacd2",
+        "android_client_info": {
+          "package_name": "com.oposites.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "473420233111-n2qrt7l44520pbbflnmn214q0993f73e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.oposites.app",
+            "certificate_hash": "45381995c9f1d96f8216538f33dcbf31f6237e9f"
+          }
+        },
+        {
+          "client_id": "473420233111-1suhv1oaa0oodikcrt3mpgafg4dnhfic.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPPq0hBaLQU_-SooMJB-rXuJpY7JjI9O4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "473420233111-1suhv1oaa0oodikcrt3mpgafg4dnhfic.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -56,6 +56,13 @@ final class NotFoundException extends ApiException {
   const NotFoundException([super.message = 'Recurso no encontrado.']);
 }
 
+/// 429 — límite de requests al servicio de IA. Reintentar en unos segundos.
+final class RateLimitException extends ApiException {
+  const RateLimitException([
+    super.message = 'La IA está ocupada. Esperá unos segundos y volvé a intentarlo.',
+  ]);
+}
+
 /// 5xx — error interno del servidor.
 final class ServerException extends ApiException {
   const ServerException([

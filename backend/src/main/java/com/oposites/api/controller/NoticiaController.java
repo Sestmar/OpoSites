@@ -47,7 +47,7 @@ public class NoticiaController {
     public ResponseEntity<NoticiaConteosResponse> conteos(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam(required = false) Long ramaId) {
-        return ResponseEntity.ok(noticiaService.getConteos(ramaId));
+        return ResponseEntity.ok(noticiaService.getConteos(user.getUsername(), ramaId));
     }
 
     @GetMapping("/{id}")
