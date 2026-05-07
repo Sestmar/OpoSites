@@ -70,7 +70,7 @@ public class NoticiaIngestionService {
                 for (IngestedItem item : items) {
                     // Filtro de relevancia: solo artículos de oposiciones.
                     // Las fuentes DUMMY se excluyen del filtro (son de prueba).
-                    if (fuente.getTipoFuente() != com.oposites.api.model.enums.TipoFuente.DUMMY
+                    if (fuente.getTipoFuente() != com.oposites.api.model.enums.TipoFuenteNoticia.DUMMY
                             && !esRelevanteParaOposiciones(item)) {
                         itemsFiltrados++;
                         continue;
