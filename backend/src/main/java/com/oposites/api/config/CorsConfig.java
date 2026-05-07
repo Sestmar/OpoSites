@@ -25,7 +25,13 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(Arrays.asList(allowedOriginsRaw.split(",")));
+        // "*" con allowCredentials=true requiere allowedOriginPatterns, no allowedOrigins
+        List<String> origins = Arrays.asList(allowedOriginsRaw.split(","));
+        if (origins.size() == 1 && origins.get(0).trim().equals("*")) {
+            config.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            config.setAllowedOrigins(origins);
+        }
 
         if (!allowedOriginPatternsRaw.isBlank()) {
             config.setAllowedOriginPatterns(Arrays.asList(allowedOriginPatternsRaw.split(",")));
