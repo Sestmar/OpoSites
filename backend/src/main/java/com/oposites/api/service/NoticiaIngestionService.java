@@ -55,6 +55,7 @@ public class NoticiaIngestionService {
         int itemsLeidos = 0;
         int itemsCreados = 0;
         int itemsDuplicados = 0;
+        int itemsFiltrados = 0;
         int errores = 0;
 
         for (FuenteNoticia fuente : fuentes) {
@@ -67,6 +68,14 @@ public class NoticiaIngestionService {
                 itemsLeidos += items.size();
 
                 for (IngestedItem item : items) {
+                    // Filtro de relevancia: solo artículos de oposiciones.
+                    // Las fuentes DUMMY se excluyen del filtro (son de prueba).
+                    if (fuente.getTipoFuente() != com.oposites.api.model.enums.TipoFuente.DUMMY
+                            && !esRelevanteParaOposiciones(item)) {
+                        itemsFiltrados++;
+                        continue;
+                    }
+
                     // Dedupe en memoria para la ejecución actual:
                     // prioriza URL+fecha, y si no hay URL válida usa título+fecha.
                     String dedupeKey = buildDedupeKey(item);
@@ -102,8 +111,58 @@ public class NoticiaIngestionService {
                 itemsLeidos,
                 itemsCreados,
                 itemsDuplicados,
+                itemsFiltrados,
                 errores
         );
+    }
+
+    /**
+     * Descarta artículos del BOE que no sean convocatorias de oposición.
+     *
+     * Lógica:
+     *  1. Si el título contiene algún término de EXCLUSIÓN → false (ruido editorial).
+     *  2. Si el título contiene algún término de INCLUSIÓN → true (relevante).
+     *  3. Si no encaja en ninguno → false (descartado por defecto).
+     *
+     * Los términos están en minúsculas; la comparación ignora acentos y mayúsculas
+     * mediante toLowerCase(). No se usa normalización Unicode para mantener la
+     * dependencia en cero librerías externas.
+     */
+    private boolean esRelevanteParaOposiciones(IngestedItem item) {
+        String texto = (item.titulo() + " " + (item.contenido() == null ? "" : item.contenido()))
+                .toLowerCase(Locale.ROOT);
+
+        // ── Exclusiones (traslados, comisiones, etc. — no interesan al opositor) ──
+        if (containsAny(texto,
+                "concurso de traslado",
+                "comision de servicio",
+                "comisión de servicio",
+                "permuta",
+                "excedencia",
+                "jubilacion",
+                "jubilación",
+                "pension",
+                "pensión",
+                "incapacidad",
+                "reconocimiento de trienios")) {
+            return false;
+        }
+
+        // ── Inclusiones (artículos directamente sobre oposiciones) ──
+        return containsAny(texto,
+                "convocatoria",
+                "proceso selectivo",
+                "oposicion",
+                "oposición",
+                "prueba selectiva",
+                "pruebas selectivas",
+                "oferta de empleo",
+                "acceso libre",
+                "ingreso al cuerpo",
+                "plazas de nuevo ingreso",
+                "seleccion de personal",
+                "selección de personal",
+                "libre concurrencia");
     }
 
     private boolean isDuplicatedInDatabase(IngestedItem item) {
@@ -265,6 +324,7 @@ public class NoticiaIngestionService {
             int itemsLeidos,
             int itemsCreados,
             int itemsDuplicados,
+            int itemsFiltrados,
             int errores
     ) {
     }
