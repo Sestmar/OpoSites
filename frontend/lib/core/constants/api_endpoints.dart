@@ -9,7 +9,9 @@
 abstract final class ApiEndpoints {
   // 10.0.2.2 = localhost del host para emulador Android.
   // Para web/Windows desktop usar 'http://localhost:8080/api/v1'.
-  static const String baseUrl = 'http://192.168.1.133:8080/api/v1';
+  // ── Entorno activo — comentar/descomentar según necesitás ───────────────────
+  static const String baseUrl = 'http://192.168.1.133:8080/api/v1'; // LOCAL
+  // static const String baseUrl = 'https://oposites.onrender.com/api/v1'; // PROD
 
   // ── 1. Auth ──────────────────────────────────────────────────────────────
   static const String register    = '/auth/register';
@@ -64,10 +66,11 @@ abstract final class ApiEndpoints {
   static String planTareaEliminar(int tareaId)  => '/plan/tarea/$tareaId';
 
   // ── 10. Noticias ─────────────────────────────────────────────────────────
-  static const String noticias        = '/noticias';
-  static const String noticiaConteos  = '/noticias/conteos';
-  static String noticiaDetalle(int id) => '/noticias/$id';
-  static String noticiaLeer(int id)    => '/noticias/$id/leer';
+  static const String noticias          = '/noticias';
+  static const String noticiaConteos   = '/noticias/conteos';
+  static const String noticiaLeerTodas = '/noticias/leer-todas';
+  static String noticiaDetalle(int id)  => '/noticias/$id';
+  static String noticiaLeer(int id)     => '/noticias/$id/leer';
 
   // ── 11. Calendario ───────────────────────────────────────────────────────
   static const String eventos = '/calendario/eventos';
@@ -90,4 +93,10 @@ abstract final class ApiEndpoints {
   static String documentoTestUltimo(int id)  => '/documentos/$id/test/ultimo';
   static String documentoTestPorId(int docId, int testId) =>
       '/documentos/$docId/test/$testId';
+
+  // ── 15. Admin — Noticias ──────────────────────────────────────────────────
+  static const String adminNoticiasBorradores = '/admin/noticias/borradores';
+  static const String adminNoticiasIngesta    = '/admin/noticias/ingesta/ejecutar';
+  static String adminNoticiaEstado(int id)    => '/admin/noticias/$id/estado';
+  static String adminNoticiaEliminar(int id)  => '/admin/noticias/$id';
 }

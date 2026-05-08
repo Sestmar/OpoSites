@@ -2,10 +2,12 @@ package com.oposites.api.service;
 
 import com.oposites.api.model.entity.FuenteNoticia;
 import com.oposites.api.model.entity.NoticiaConvocatoria;
+import com.oposites.api.model.entity.RamaOposicion;
 import com.oposites.api.model.enums.EstadoEditorialNoticia;
 import com.oposites.api.model.enums.TipoNoticia;
 import com.oposites.api.repository.FuenteNoticiaRepository;
 import com.oposites.api.repository.NoticiaConvocatoriaRepository;
+import com.oposites.api.repository.RamaOposicionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,6 +39,7 @@ public class NoticiaIngestionService {
 
     private final FuenteNoticiaRepository fuenteNoticiaRepository;
     private final NoticiaConvocatoriaRepository noticiaRepository;
+    private final RamaOposicionRepository ramaRepository;
     private final RestClient restClient;
 
     @Scheduled(cron = "${app.noticias.ingesta.cron:0 0 */6 * * *}")
@@ -50,6 +53,8 @@ public class NoticiaIngestionService {
     @Transactional
     public IngestionResult ejecutarIngesta() {
         List<FuenteNoticia> fuentes = fuenteNoticiaRepository.findByActivaTrueOrderByIdAsc();
+        // Cargamos todas las ramas una sola vez por lote para no hacer N queries.
+        List<RamaOposicion> ramas = ramaRepository.findAll();
         Set<String> dedupeKeysLote = new HashSet<>();
 
         int itemsLeidos = 0;
@@ -88,8 +93,14 @@ public class NoticiaIngestionService {
                         continue;
                     }
 
+                    // Rama: si la fuente ya tiene una rama asignada, se usa directamente.
+                    // Si la fuente es global (null), intentamos clasificar por keywords.
+                    RamaOposicion ramaAsignada = fuente.getRama() != null
+                            ? fuente.getRama()
+                            : clasificarRamaPorKeywords(item, ramas);
+
                     noticiaRepository.save(NoticiaConvocatoria.builder()
-                            .rama(fuente.getRama())
+                            .rama(ramaAsignada)
                             .titulo(item.titulo())
                             .contenido(item.contenido())
                             .urlExterna(item.urlExterna())
@@ -186,6 +197,156 @@ public class NoticiaIngestionService {
         return "TITLE|" + item.titulo().trim().toLowerCase(Locale.ROOT) + "|" + fecha;
     }
 
+    /**
+     * Abrevia títulos largos típicos del BOE extrayendo el fragmento informativo
+     * que sigue a un conector administrativo ("por la que se", "referente a", etc.).
+     *
+     * Reglas de fallback — se respeta el título original cuando:
+     *   1. Ya tiene ≤ 90 caracteres (ya es corto, no tocar).
+     *   2. Ningún conector produce un fragmento ≥ 40 caracteres (el resultado sería
+     *      demasiado corto para ser informativo).
+     *   3. El fragmento extraído empieza por una preposición sola ("a", "de", "en", "que")
+     *      sin más contenido relevante inmediato.
+     *
+     * Cuando ningún conector matchea y el título supera el límite, se trunca
+     * limpiamente en palabra y se añade "…" como último recurso.
+     */
+    private String acortarTitulo(String titulo) {
+        if (titulo == null || titulo.length() <= 90) {
+            return titulo;
+        }
+
+        String lower = titulo.toLowerCase(Locale.ROOT);
+
+        // Conectores administrativos del BOE, de más a menos específico.
+        // El orden garantiza que "por la que se" se evalúa antes que "por la que".
+        String[] conectores = {
+                "por la que se",
+                "por el que se",
+                "por la que",
+                "por el que",
+                "referente a la",
+                "referente a",
+                "referido a",
+                "relativa a",
+                "relativo a",
+                "sobre"
+        };
+
+        for (String conector : conectores) {
+            int idx = lower.indexOf(conector);
+            if (idx == -1) continue;
+
+            String fragmento = titulo.substring(idx + conector.length()).trim();
+
+            // Quitar punto final residual.
+            if (fragmento.endsWith(".")) {
+                fragmento = fragmento.substring(0, fragmento.length() - 1).trim();
+            }
+
+            // Fallback si el fragmento es demasiado corto para ser útil.
+            if (fragmento.length() < 40) {
+                continue;
+            }
+
+            // Capitalizar primera letra del fragmento extraído.
+            fragmento = Character.toUpperCase(fragmento.charAt(0)) + fragmento.substring(1);
+
+            return truncarEnPalabra(fragmento, 90);
+        }
+
+        // Último recurso: truncar el título original en palabra.
+        return truncarEnPalabra(titulo, 90);
+    }
+
+    /** Trunca [texto] al límite dado cortando en el último espacio antes del límite. */
+    private String truncarEnPalabra(String texto, int limite) {
+        if (texto.length() <= limite) return texto;
+        // Buscar el último espacio antes del límite.
+        int corte = texto.lastIndexOf(' ', limite);
+        // Si el espacio está muy al inicio (< 50% del límite), cortar en el límite exacto.
+        if (corte < limite / 2) corte = limite;
+        return texto.substring(0, corte).trim() + "…";
+    }
+
+    /**
+     * Asigna una rama a una noticia clasificando por keywords sobre título + contenido.
+     * Solo se llama cuando la fuente no tiene rama propia (fuente global del BOE).
+     *
+     * Reglas:
+     * - 1 match  → esa rama.
+     * - 0 o 2+   → null (global). Ante la ambigüedad, preferimos no clasificar mal.
+     *
+     * Los keywords están en minúsculas con y sin tildes para cubrir variaciones del BOE.
+     * No se usa normalización Unicode para mantener cero dependencias externas.
+     */
+    private RamaOposicion clasificarRamaPorKeywords(IngestedItem item, List<RamaOposicion> ramas) {
+        // Usamos solo el título para la clasificación primaria: es más limpio y
+        // específico que el contenido, que puede mencionar varios cuerpos a la vez.
+        // Fallback al contenido si el título no tiene match.
+        String textoTitulo = item.titulo().toLowerCase(Locale.ROOT);
+        String textoCompleto = textoTitulo + " "
+                + (item.contenido() == null ? "" : item.contenido().toLowerCase(Locale.ROOT));
+
+        // Keywords por nombre de rama (exactamente como están en el seed V8).
+        // Usamos Map.entry para mantener el orden de evaluación sin Map.of (>10 entradas).
+        Map<String, String[]> keywordsPorNombre = new LinkedHashMap<>();
+        keywordsPorNombre.put("Policía Nacional", new String[]{
+                "cuerpo nacional de polic\u00eda", "cuerpo nacional de policia",
+                "polic\u00eda nacional", "policia nacional",
+                "direcci\u00f3n general de la polic\u00eda", "direccion general de la policia",
+                "cnp"
+        });
+        keywordsPorNombre.put("Guardia Civil", new String[]{
+                "guardia civil"
+        });
+        keywordsPorNombre.put("Cuerpo de Ayudantes de II.PP. (Prisiones)", new String[]{
+                "instituciones penitenciarias",
+                "cuerpo de ayudantes de instituciones",
+                "establecimientos penitenciarios",
+                "ii.pp.", "iipp"
+        });
+        keywordsPorNombre.put("Fuerzas Armadas", new String[]{
+                "fuerzas armadas",
+                "ej\u00e9rcito de tierra", "ejercito de tierra",
+                "ej\u00e9rcito del aire", "ejercito del aire",
+                "armada espa\u00f1ola", "armada española",
+                "ministerio de defensa"
+        });
+        keywordsPorNombre.put("T\u00e9cnico Auxiliar Sanitario", new String[]{
+                "t\u00e9cnico auxiliar sanitario", "tecnico auxiliar sanitario",
+                "auxiliar sanitario", "auxiliares sanitarios",
+                "tcae",
+                "cuidados auxiliares de enfermer\u00eda", "cuidados auxiliares de enfermeria"
+        });
+
+        // Construir lookup rápido nombre → RamaOposicion
+        Map<String, RamaOposicion> ramasPorNombre = new HashMap<>();
+        for (RamaOposicion rama : ramas) {
+            ramasPorNombre.put(rama.getNombre(), rama);
+        }
+
+        List<RamaOposicion> matches = new ArrayList<>();
+        for (Map.Entry<String, String[]> entry : keywordsPorNombre.entrySet()) {
+            RamaOposicion rama = ramasPorNombre.get(entry.getKey());
+            if (rama == null) continue; // Rama del catálogo no encontrada en BD — saltar.
+
+            // Intentar match primero solo en el título; si no hay, intentar en el completo.
+            boolean matchTitulo = containsAny(textoTitulo, entry.getValue());
+            boolean matchCompleto = !matchTitulo && containsAny(textoCompleto, entry.getValue());
+
+            if (matchTitulo || matchCompleto) {
+                matches.add(rama);
+            }
+        }
+
+        // Regla de ambigüedad: exactamente 1 match → clasificar; cualquier otro caso → global.
+        if (matches.size() == 1) {
+            return matches.get(0);
+        }
+        return null;
+    }
+
     private TipoNoticia clasificarTipo(IngestedItem item) {
         String text = (item.titulo() + " " + item.contenido()).toLowerCase(Locale.ROOT);
         if (containsAny(text, "convocatoria", "plazas", "oferta de empleo", "oposición", "bases")) {
@@ -255,7 +416,7 @@ public class NoticiaIngestionService {
                 String pubDate = textContent(item, "pubDate");
 
                 items.add(new IngestedItem(
-                        titulo.trim(),
+                        acortarTitulo(titulo.trim()),
                         (descripcion == null || descripcion.isBlank())
                                 ? "Contenido importado automáticamente desde RSS"
                                 : descripcion.trim(),

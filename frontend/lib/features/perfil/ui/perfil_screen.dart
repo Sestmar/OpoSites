@@ -227,6 +227,7 @@ class _PerfilContent extends ConsumerWidget {
             ),
             onPressed: () => _showDeleteAccountDialog(context, ref),
           ),
+
         ],
       ),
     );

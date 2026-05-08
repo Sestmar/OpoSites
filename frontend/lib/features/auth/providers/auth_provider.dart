@@ -6,6 +6,8 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../data/auth_repository.dart';
+import '../../noticias/providers/noticias_provider.dart';
+import '../../plan/providers/plan_semana_provider.dart';
 
 part 'auth_provider.g.dart';
 
@@ -162,6 +164,10 @@ class Auth extends _$Auth {
   Future<void> logout() async {
     state = const AuthLoading();
     await ref.read(authRepositoryProvider).logout();
+    // Invalidar providers con keepAlive que acumulan datos del usuario saliente.
+    ref.invalidate(planSemanaProvider);
+    ref.invalidate(noticiasListNotifierProvider);
+    ref.invalidate(noticiaConteosProvider);
     state = const AuthUnauthenticated();
   }
 

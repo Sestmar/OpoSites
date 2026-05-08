@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../simulacros/providers/simulacro_session_provider.dart';
+import '../../tests/providers/test_session_provider.dart';
 import '../data/models/plan_hoy.dart';
 import '../data/models/plan_tarea.dart';
 import '../providers/plan_provider.dart';
@@ -37,17 +42,69 @@ class PlanHoyScreen extends ConsumerStatefulWidget {
 
 class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
   int? _loadingTaskId;
+  int? _launchingTareaId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Limpiar posible valor residual de sesiones anteriores
+      ref.read(planTareaActivaProvider.notifier).state = null;
       ref.read(planSemanaProvider.future).ignore();
       final cfg = ref.read(planConfiguracionNotifierProvider);
       if (!cfg.hasValue || cfg.value == null) {
         ref.read(planConfiguracionNotifierProvider.notifier).load();
       }
     });
+  }
+
+  /// Lanza el flujo correcto según el tipo de tarea:
+  /// - TEST      → genera test con el tema preseleccionado y navega
+  /// - SIMULACRO → inicia el simulacro concreto y navega
+  /// - REPASO    → marca completada directamente (sin pantalla destino)
+  Future<void> _lanzarTarea(PlanTarea tarea) async {
+    if (tarea.completada) return;
+
+    switch (tarea.tipo) {
+      case TipoPlanTarea.test:
+        final temaId = tarea.temaId;
+        if (temaId == null) return;
+        final authState = ref.read(authProvider);
+        final ramaId = authState is AuthAuthenticated ? authState.ramaPrincipalId : null;
+        if (ramaId == null || ramaId < 0) return;
+
+        setState(() => _launchingTareaId = tarea.id);
+        ref.read(planTareaActivaProvider.notifier).state = tarea.id;
+        try {
+          await ref.read(activeTestProvider.notifier).generarTest(
+                ramaId: ramaId,
+                temaIds: [temaId],
+              );
+        } catch (e) {
+          ref.read(planTareaActivaProvider.notifier).state = null;
+          if (mounted) _showError(_msgError(e));
+        } finally {
+          if (mounted) setState(() => _launchingTareaId = null);
+        }
+
+      case TipoPlanTarea.simulacro:
+        final simulacroId = tarea.simulacroId;
+        if (simulacroId == null) return;
+
+        setState(() => _launchingTareaId = tarea.id);
+        ref.read(planTareaActivaProvider.notifier).state = tarea.id;
+        try {
+          await ref.read(activeSimulacroProvider.notifier).iniciarSimulacro(simulacroId);
+        } catch (e) {
+          ref.read(planTareaActivaProvider.notifier).state = null;
+          if (mounted) _showError(_msgError(e));
+        } finally {
+          if (mounted) setState(() => _launchingTareaId = null);
+        }
+
+      case TipoPlanTarea.repaso:
+        await _completarTarea(tarea);
+    }
   }
 
   Future<void> _completarTarea(PlanTarea tarea) async {
@@ -116,6 +173,16 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Navegar cuando el test generado desde el plan está listo
+    ref.listen<TestState>(activeTestProvider, (_, next) {
+      if (next is TestStateActive) context.go(AppRoutes.testActivo);
+    });
+
+    // Navegar cuando el simulacro iniciado desde el plan está listo
+    ref.listen<SimulacroState>(activeSimulacroProvider, (_, next) {
+      if (next is SimulacroStateActive) context.go(AppRoutes.simulacroActivo);
+    });
+
     final semanaState = ref.watch(planSemanaProvider);
     final diasHastaExamen =
         ref.watch(planConfiguracionNotifierProvider).valueOrNull?.diasHastaExamen;
@@ -169,10 +236,13 @@ class _PlanHoyScreenState extends ConsumerState<PlanHoyScreen> {
                       )
                     : _PlanBody(
                         plan: dia,
+                        semana: semana.dias,
                         loadingTaskId: _loadingTaskId,
+                        launchingTareaId: _launchingTareaId,
                         diasHastaExamen: diasHastaExamen,
                         onCompletar: _completarTarea,
                         onEliminar: _eliminarTarea,
+                        onLanzar: _lanzarTarea,
                       ),
               ),
             ],
@@ -360,22 +430,169 @@ class _DayDot extends StatelessWidget {
   }
 }
 
+// ── Historial semanal ──────────────────────────────────────────────────────────
+
+class _WeekSummaryBar extends StatelessWidget {
+  const _WeekSummaryBar({required this.semana});
+
+  final List<PlanHoy> semana;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = Theme.of(context).brightness;
+    final teal = AppColors.primaryFor(b);
+
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ESTA SEMANA',
+            style: AppText.label.copyWith(
+              color: AppColors.textMutedFor(b),
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: semana.map((dia) {
+              final fecha = _parseDate(dia.fecha);
+              final now = DateTime.now();
+              final isToday = fecha.year == now.year &&
+                  fecha.month == now.month &&
+                  fecha.day == now.day;
+              final hasTareas = dia.totalTareas > 0;
+              final ratio = hasTareas
+                  ? dia.tareasCompletadas / dia.totalTareas
+                  : 0.0;
+              final completado = hasTareas && ratio == 1.0;
+
+              return _DayBar(
+                label: _dayAbbr[fecha.weekday],
+                ratio: ratio,
+                hasTareas: hasTareas,
+                completado: completado,
+                isToday: isToday,
+                teal: teal,
+                b: b,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DayBar extends StatelessWidget {
+  const _DayBar({
+    required this.label,
+    required this.ratio,
+    required this.hasTareas,
+    required this.completado,
+    required this.isToday,
+    required this.teal,
+    required this.b,
+  });
+
+  final String label;
+  final double ratio;
+  final bool hasTareas;
+  final bool completado;
+  final bool isToday;
+  final Color teal;
+  final Brightness b;
+
+  static const _barH = 40.0;
+  static const _barW = 22.0;
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Colores coherentes con _DayDot ────────────────────────────────
+    // sin tareas  → fondo neutro, sin relleno   (= hueco con borde neutral)
+    // pendiente   → fondo teal muy suave         (= hueco con borde faint)
+    // parcial     → relleno teal al ratio        (= dot teal 50% opacity)
+    // completado  → relleno teal 100%            (= dot teal sólido)
+    final Color bg = !hasTareas
+        ? AppColors.borderFor(b)
+        : teal.withOpacity(0.10);
+    final Color fill = completado
+        ? teal
+        : ratio > 0
+            ? teal.withOpacity(0.55)
+            : Colors.transparent;
+
+    return Column(
+      children: [
+        SizedBox(
+          width: _barW,
+          height: _barH,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              // Fondo
+              Container(
+                width: _barW,
+                height: _barH,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+              // Relleno proporcional
+              if (hasTareas && ratio > 0)
+                Container(
+                  width: _barW,
+                  height: _barH * ratio,
+                  decoration: BoxDecoration(
+                    color: fill,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              // Check cuando está completado
+              if (completado)
+                const Icon(Icons.check_rounded, size: 13, color: Colors.white),
+            ],
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: AppText.label.copyWith(
+            color: isToday ? teal : AppColors.textMutedFor(b),
+            fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Cuerpo con datos ───────────────────────────────────────────────────────────
 
 class _PlanBody extends StatelessWidget {
   const _PlanBody({
     required this.plan,
+    required this.semana,
     required this.onCompletar,
     required this.onEliminar,
+    required this.onLanzar,
     this.loadingTaskId,
+    this.launchingTareaId,
     this.diasHastaExamen,
   });
 
   final PlanHoy plan;
+  final List<PlanHoy> semana;
   final int? loadingTaskId;
+  final int? launchingTareaId;
   final int? diasHastaExamen;
   final Future<void> Function(PlanTarea) onCompletar;
   final Future<void> Function(PlanTarea) onEliminar;
+  final Future<void> Function(PlanTarea) onLanzar;
 
   @override
   Widget build(BuildContext context) {
@@ -388,6 +605,10 @@ class _PlanBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
+        // ── Historial semanal ──────────────────────────────────────────
+        _WeekSummaryBar(semana: semana),
+        const SizedBox(height: 16),
+
         // ── Tarjeta de progreso del día ────────────────────────────────
         _ProgressCard(
           fecha: _parseDate(plan.fecha),
@@ -410,8 +631,10 @@ class _PlanBody extends StatelessWidget {
             child: _TareaTile(
               tarea: t,
               isLoading: loadingTaskId == t.id,
+              isLaunching: launchingTareaId == t.id,
               onCompletar: () => onCompletar(t),
               onEliminar: () => onEliminar(t),
+              onLanzar: () => onLanzar(t),
             ),
           ),
         ),
@@ -516,26 +739,32 @@ class _ProgressCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                if (diasHastaExamen != null && diasHastaExamen! <= 30) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Modo intensivo — el plan prioriza simulacros.',
-                    style: AppText.caption.copyWith(
-                      color: AppColors.accentWarmSoftFor(b),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
           const SizedBox(width: 20),
 
-          // ── Anillo de progreso ───────────────────────────────────────
-          _ProgressRing(
-            value: progreso,
-            completadas: completadas,
-            total: total,
+          // ── Anillo de progreso + indicador modo intensivo ────────────
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ProgressRing(
+                value: progreso,
+                completadas: completadas,
+                total: total,
+              ),
+              if (diasHastaExamen != null && diasHastaExamen! <= 30) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Modo intensivo',
+                  style: AppText.caption.copyWith(
+                    color: AppColors.accentWarmSoftFor(b),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
@@ -656,13 +885,17 @@ class _TareaTile extends StatelessWidget {
     required this.tarea,
     required this.onCompletar,
     required this.onEliminar,
+    required this.onLanzar,
     this.isLoading = false,
+    this.isLaunching = false,
   });
 
   final PlanTarea tarea;
   final VoidCallback onCompletar;
   final VoidCallback onEliminar;
+  final VoidCallback onLanzar;
   final bool isLoading;
+  final bool isLaunching;
 
   @override
   Widget build(BuildContext context) {
@@ -671,10 +904,21 @@ class _TareaTile extends StatelessWidget {
     final tipoColor = _tipoColor(tarea.tipo, b);
     final minutos = _minutosPorTipo[tarea.tipo] ?? 20;
 
+    // TEST y SIMULACRO no-manuales navegan a la práctica; REPASO marca directo.
+    final bool esNavegable = !tarea.manual &&
+        (tarea.tipo == TipoPlanTarea.test ||
+            tarea.tipo == TipoPlanTarea.simulacro);
+    final VoidCallback? tapAction =
+        (completada || isLoading || isLaunching)
+            ? null
+            : esNavegable
+                ? onLanzar
+                : onCompletar;
+
     return AppCard(
       padding: EdgeInsets.zero,
       child: InkWell(
-        onTap: (completada || isLoading) ? null : onCompletar,
+        onTap: tapAction,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -758,7 +1002,7 @@ class _TareaTile extends StatelessWidget {
 
               // ── Acción derecha ───────────────────────────────────────
               const SizedBox(width: 10),
-              if (isLoading)
+              if (isLoading || isLaunching)
                 const SizedBox(
                   width: 20,
                   height: 20,

@@ -7,6 +7,7 @@ import com.oposites.api.model.enums.TipoFuenteNoticia;
 import com.oposites.api.model.enums.TipoNoticia;
 import com.oposites.api.repository.FuenteNoticiaRepository;
 import com.oposites.api.repository.NoticiaConvocatoriaRepository;
+import com.oposites.api.repository.RamaOposicionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,13 +33,16 @@ class NoticiaIngestionServiceTest {
     @Mock
     private NoticiaConvocatoriaRepository noticiaRepository;
     @Mock
+    private RamaOposicionRepository ramaRepository;
+    @Mock
     private org.springframework.web.client.RestClient restClient;
 
     private NoticiaIngestionService service;
 
     @BeforeEach
     void setUp() {
-        service = new NoticiaIngestionService(fuenteRepository, noticiaRepository, restClient);
+        service = new NoticiaIngestionService(fuenteRepository, noticiaRepository, ramaRepository, restClient);
+        when(ramaRepository.findAll()).thenReturn(java.util.List.of());
         when(noticiaRepository.save(any(NoticiaConvocatoria.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
     }

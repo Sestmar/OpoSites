@@ -36,6 +36,7 @@ import '../../features/documentos/ui/documento_test_result_screen.dart';
 import '../../features/documentos/ui/documento_test_screen.dart';
 import '../../features/documentos/ui/mapa_mental_screen.dart';
 import '../../features/documentos/ui/resumen_screen.dart';
+import '../../features/admin/ui/admin_screen.dart';
 import '../../features/tests/ui/test_active_screen.dart';
 import '../../features/tests/ui/test_config_screen.dart';
 import '../../features/tests/ui/test_fallos_screen.dart';
@@ -86,6 +87,9 @@ abstract final class AppRoutes {
   static const perfil      = '/perfil';
   static const editarPerfil = '/perfil/editar';
   static const cambiarOposicionPerfil = '/perfil/cambiar-oposicion';
+
+  // ── Admin ──────────────────────────────────────────────────────────────────
+  static const admin = '/admin';
 
   // ── Documentos sub-rutas ───────────────────────────────────────────────────
   static const documentos = '/documentos';
@@ -302,6 +306,10 @@ GoRouter appRouter(AppRouterRef ref) {
                         const SelectOposicionScreen(fromPerfil: true),
                   ),
                 ],
+              ),
+              GoRoute(
+                path: AppRoutes.admin,
+                builder: (_, __) => const AdminScreen(),
               ),
               GoRoute(
                 path: AppRoutes.documentos,

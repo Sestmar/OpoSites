@@ -18,8 +18,8 @@ class AuthInterceptor extends Interceptor {
       : _refreshDio = Dio(
           BaseOptions(
             baseUrl: ApiEndpoints.baseUrl,
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 10),
+            connectTimeout: const Duration(seconds: 40),
+            receiveTimeout: const Duration(seconds: 40),
             headers: {'Content-Type': 'application/json'},
           ),
         );

@@ -164,6 +164,16 @@ public class NoticiaService {
         noticiaRepository.deleteById(id);
     }
 
+    @Transactional
+    public void marcarTodasLeidas(String email, Long ramaId) {
+        Usuario usuario = findUsuario(email);
+        if (ramaId != null) {
+            noticiaLeidaRepository.insertarLeidasPorRama(usuario.getId(), ramaId);
+        } else {
+            noticiaLeidaRepository.insertarLeidasGlobal(usuario.getId());
+        }
+    }
+
     public Page<NoticiaResponse> listarBorradores(Pageable pageable) {
         return noticiaRepository
                 .findByEstadoEditorialOrderByFechaPublicacionDesc(EstadoEditorialNoticia.BORRADOR, pageable)

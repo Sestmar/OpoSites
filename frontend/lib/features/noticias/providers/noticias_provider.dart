@@ -98,6 +98,8 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
         filtroQ: efectivoQ,
       );
     });
+    // Invalidar conteos para que los chips reflejen el estado actual de la BD.
+    ref.invalidate(noticiaConteosProvider);
   }
 
   /// Recarga respetando los filtros actuales (tipo, ramaId y q).
@@ -154,6 +156,42 @@ class NoticiasListNotifier extends _$NoticiasListNotifier {
       filtroRamaId: current.filtroRamaId,
       filtroQ: current.filtroQ,
     ));
+  }
+
+  /// Elimina la noticia [id] de la lista local (sin refetch).
+  /// Llamar tras eliminar en el backend para mantener la lista sincronizada.
+  void eliminarLocal(int id) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(NoticiasListState(
+      items: current.items.where((n) => n.id != id).toList(),
+      paginaActual: current.paginaActual,
+      hayMas: current.hayMas,
+      filtroTipo: current.filtroTipo,
+      filtroRamaId: current.filtroRamaId,
+      filtroQ: current.filtroQ,
+    ));
+  }
+
+  /// Marca como leídas todas las noticias del filtro activo actual.
+  /// Actualiza la lista local y el badge sin recargar la página.
+  Future<void> marcarTodasLeidas() async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    await ref
+        .read(noticiasRepositoryProvider)
+        .marcarTodasLeidas(ramaId: current.filtroRamaId);
+
+    state = AsyncData(NoticiasListState(
+      items: current.items.map(_noticiaResumenLeida).toList(),
+      paginaActual: current.paginaActual,
+      hayMas: current.hayMas,
+      filtroTipo: current.filtroTipo,
+      filtroRamaId: current.filtroRamaId,
+      filtroQ: current.filtroQ,
+    ));
+    ref.invalidate(noticiaConteosProvider);
   }
 
   // Reconstruye un NoticiaResumen con leida=true sin json_annotation.

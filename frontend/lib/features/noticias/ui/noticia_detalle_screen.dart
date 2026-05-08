@@ -6,6 +6,11 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../admin/data/admin_repository.dart';
+import '../../admin/providers/admin_provider.dart';
+import '../../perfil/providers/perfil_provider.dart';
 import '../data/models/noticia.dart';
 import '../data/models/noticia_resumen.dart';
 import '../providers/noticias_provider.dart';
@@ -71,13 +76,67 @@ class _NoticiaDetalleScreenState
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _eliminar(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Eliminar noticia?'),
+        content: const Text(
+          'Esta acción es irreversible. La noticia desaparecerá para todos los usuarios.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await ref.read(adminRepositoryProvider).eliminar(widget.id);
+      ref.read(noticiasListNotifierProvider.notifier).eliminarLocal(widget.id);
+      if (mounted) context.pop();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo eliminar la noticia.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final b = Theme.of(context).brightness;
     final state = ref.watch(noticiaDetalleNotifierProvider);
+    final isAdmin = ref
+        .watch(perfilNotifierProvider)
+        .valueOrNull
+        ?.isAdmin ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Noticia')),
+      appBar: AppBar(
+        title: const Text('Noticia'),
+        actions: [
+          if (isAdmin)
+            IconButton(
+              icon: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+              ),
+              tooltip: 'Eliminar noticia',
+              onPressed: () => _eliminar(context),
+            ),
+        ],
+      ),
       body: state.when(
         loading: () => Center(
           child: CircularProgressIndicator(color: AppColors.primaryFor(b)),

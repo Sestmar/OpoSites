@@ -17,10 +17,30 @@ class PlanConfigScreen extends ConsumerStatefulWidget {
   ConsumerState<PlanConfigScreen> createState() => _PlanConfigScreenState();
 }
 
+// Días de la semana en orden lunes→domingo.
+// La clave es el nombre en inglés que usa el backend; el label es lo que ve el usuario.
+const _diasSemana = [
+  (key: 'MONDAY',    label: 'L'),
+  (key: 'TUESDAY',   label: 'M'),
+  (key: 'WEDNESDAY', label: 'X'),
+  (key: 'THURSDAY',  label: 'J'),
+  (key: 'FRIDAY',    label: 'V'),
+  (key: 'SATURDAY',  label: 'S'),
+  (key: 'SUNDAY',    label: 'D'),
+];
+
+const _horasDefault = 2;
+const _horasMin = 1;
+const _horasMax = 8;
+
 class _PlanConfigScreenState extends ConsumerState<PlanConfigScreen> {
   final _horasSemanaCtrl = TextEditingController();
   final _fechaExamenCtrl = TextEditingController();
   PreferenciaPlan _preferencia = PreferenciaPlan.mixto;
+
+  /// Días activos: clave = "MONDAY"…"SUNDAY", valor = horas (1–8).
+  /// null mientras no se haya cargado la config del servidor.
+  Map<String, int>? _diasDisponibles;
 
   /// Evita reinicializar el formulario si el provider se recarga (ej. tras guardar).
   bool _formInitialized = false;
@@ -47,6 +67,10 @@ class _PlanConfigScreenState extends ConsumerState<PlanConfigScreen> {
     _fechaExamenCtrl.text = config.fechaExamenObjetivo ?? '';
     setState(() {
       _preferencia = config.preferencia;
+      // Hidratar días disponibles: null del servidor → mapa vacío (sin días activos por defecto).
+      _diasDisponibles = config.diasDisponibles != null
+          ? Map<String, int>.from(config.diasDisponibles!)
+          : {};
       _formInitialized = true;
     });
   }
@@ -63,10 +87,13 @@ class _PlanConfigScreenState extends ConsumerState<PlanConfigScreen> {
     }
 
     final fechaText = _fechaExamenCtrl.text.trim();
+    // Enviar diasDisponibles solo si ya fue inicializado (evita sobreescribir con null).
+    // Mapa vacío es válido y significa "sin días activos".
     final request = UpdatePlanConfiguracionRequest(
       horasSemana: horas,
       preferencia: _preferencia,
       fechaExamenObjetivo: fechaText.isEmpty ? null : fechaText,
+      diasDisponibles: _diasDisponibles,
     );
 
     // actualizar usa AsyncValue.guard: los errores van al estado, no se lanzan.
@@ -117,9 +144,28 @@ class _PlanConfigScreenState extends ConsumerState<PlanConfigScreen> {
             horasSemanaCtrl: _horasSemanaCtrl,
             fechaExamenCtrl: _fechaExamenCtrl,
             preferencia: _preferencia,
+            diasDisponibles: _diasDisponibles ?? {},
             diasHastaExamen: config.diasHastaExamen,
             isSaving: false,
             onPreferenciaChanged: (p) => setState(() => _preferencia = p!),
+            onDiaToggled: (key) {
+              setState(() {
+                final dias = Map<String, int>.from(_diasDisponibles ?? {});
+                if (dias.containsKey(key)) {
+                  dias.remove(key);
+                } else {
+                  dias[key] = _horasDefault;
+                }
+                _diasDisponibles = dias;
+              });
+            },
+            onHorasChanged: (key, horas) {
+              setState(() {
+                final dias = Map<String, int>.from(_diasDisponibles ?? {});
+                dias[key] = horas;
+                _diasDisponibles = dias;
+              });
+            },
             onGuardar: _guardar,
           );
         },
@@ -135,7 +181,10 @@ class _ConfigForm extends StatelessWidget {
     required this.horasSemanaCtrl,
     required this.fechaExamenCtrl,
     required this.preferencia,
+    required this.diasDisponibles,
     required this.onPreferenciaChanged,
+    required this.onDiaToggled,
+    required this.onHorasChanged,
     required this.onGuardar,
     this.diasHastaExamen,
     this.isSaving = false,
@@ -144,9 +193,12 @@ class _ConfigForm extends StatelessWidget {
   final TextEditingController horasSemanaCtrl;
   final TextEditingController fechaExamenCtrl;
   final PreferenciaPlan preferencia;
+  final Map<String, int> diasDisponibles;
   final int? diasHastaExamen;
   final bool isSaving;
   final ValueChanged<PreferenciaPlan?> onPreferenciaChanged;
+  final ValueChanged<String> onDiaToggled;
+  final void Function(String key, int horas) onHorasChanged;
   final VoidCallback onGuardar;
 
   @override
@@ -178,9 +230,25 @@ class _ConfigForm extends StatelessWidget {
                 controller: horasSemanaCtrl,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.surfaceFor(b),
                   hintText: 'Ej: 10',
+                  hintStyle: TextStyle(color: AppColors.textFaintFor(b)),
                   suffixText: 'h / semana',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.borderFor(b)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.borderFor(b)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: AppColors.primaryFor(b), width: 1.5),
+                  ),
                 ),
               ),
             ],
@@ -234,6 +302,129 @@ class _ConfigForm extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
+        // ── Días disponibles ──────────────────────────────────────────
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'DÍAS DISPONIBLES',
+                style: AppText.label.copyWith(color: AppColors.textMutedFor(b)),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '¿Qué días podés estudiar? El plan solo generará tareas esos días.',
+                style: AppText.caption.copyWith(color: AppColors.textFaintFor(b)),
+              ),
+              const SizedBox(height: 14),
+              // ── Chips de días ──────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: _diasSemana.map((d) {
+                  final activo = diasDisponibles.containsKey(d.key);
+                  final teal = AppColors.primaryFor(b);
+                  return GestureDetector(
+                    onTap: () => onDiaToggled(d.key),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: activo ? teal : Colors.transparent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: activo ? teal : AppColors.borderFor(b),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          d.label,
+                          style: AppText.label.copyWith(
+                            color: activo
+                                ? Colors.white
+                                : AppColors.textMutedFor(b),
+                            fontWeight: activo
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              // ── Steppers de horas para días activos ───────────────
+              ..._diasSemana.where((d) => diasDisponibles.containsKey(d.key)).map((d) {
+                final horas = diasDisponibles[d.key]!;
+                final teal = AppColors.primaryFor(b);
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        child: Text(
+                          d.label,
+                          style: AppText.body.copyWith(
+                            color: AppColors.textFor(b),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: horas > _horasMin
+                            ? () => onHorasChanged(d.key, horas - 1)
+                            : null,
+                        icon: const Icon(Icons.remove_rounded),
+                        iconSize: 18,
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(32, 32),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 36,
+                        child: Text(
+                          '${horas}h',
+                          textAlign: TextAlign.center,
+                          style: AppText.body.copyWith(
+                            color: teal,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: horas < _horasMax
+                            ? () => onHorasChanged(d.key, horas + 1)
+                            : null,
+                        icon: const Icon(Icons.add_rounded),
+                        iconSize: 18,
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(32, 32),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          horas == 1 ? '1 hora' : '$horas horas',
+                          style: AppText.caption.copyWith(
+                            color: AppColors.textFaintFor(b),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
         // ── Fecha del examen ──────────────────────────────────────────
         AppCard(
           padding: const EdgeInsets.all(16),
@@ -255,11 +446,27 @@ class _ConfigForm extends StatelessWidget {
               TextField(
                 controller: fechaExamenCtrl,
                 decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.surfaceFor(b),
                   hintText: 'AAAA-MM-DD',
+                  hintStyle: TextStyle(color: AppColors.textFaintFor(b)),
                   suffixIcon: Icon(
                     Icons.calendar_today_outlined,
                     size: 18,
                     color: AppColors.textFaintFor(b),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.borderFor(b)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.borderFor(b)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: AppColors.primaryFor(b), width: 1.5),
                   ),
                 ),
               ),

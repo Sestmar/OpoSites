@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +10,8 @@ import '../data/models/question_answer.dart';
 import '../data/models/test_question.dart';
 import '../data/models/test_session.dart';
 import '../providers/test_session_provider.dart';
+import '../../plan/providers/plan_provider.dart';
+import '../../plan/providers/plan_semana_provider.dart';
 
 class TestActiveScreen extends ConsumerStatefulWidget {
   const TestActiveScreen({super.key});
@@ -17,12 +22,50 @@ class TestActiveScreen extends ConsumerStatefulWidget {
 
 class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
   int _currentIndex = 0;
+  Timer? _timer;
+  int _secondsLeft = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final testState = ref.read(activeTestProvider);
+    if (testState is TestStateActive) {
+      final minutos = testState.session.tiempoMinutos;
+      if (minutos != null && minutos > 0) {
+        _secondsLeft = minutos * 60;
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (_secondsLeft <= 1) {
+            _timer?.cancel();
+            _timer = null;
+            final current = ref.read(activeTestProvider);
+            if (current is TestStateActive) {
+              ref.read(activeTestProvider.notifier).enviarRespuestas();
+            }
+          } else {
+            setState(() => _secondsLeft--);
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     // Navegamos cuando se completa el envío
     ref.listen<TestState>(activeTestProvider, (_, next) {
       if (next is TestStateCompleted) {
+        // Auto-completar la tarea del plan si este test fue lanzado desde él
+        final tareaId = ref.read(planTareaActivaProvider);
+        if (tareaId != null) {
+          ref.read(planSemanaProvider.notifier).completarTarea(tareaId);
+          ref.read(planTareaActivaProvider.notifier).state = null;
+        }
         context.go(AppRoutes.testResultado);
       }
       if (next is TestStateError) {
@@ -98,6 +141,23 @@ class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
         title: Text('Pregunta ${_currentIndex + 1} / $total'),
         automaticallyImplyLeading: false,
         actions: [
+          // Countdown (solo si hay límite de tiempo activo)
+          if (_secondsLeft > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  _formatTime(_secondsLeft),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _secondsLeft < 60
+                            ? Theme.of(context).colorScheme.error
+                            : null,
+                        fontWeight: FontWeight.bold,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                ),
+              ),
+            ),
           // Progreso rápido: X respondidas
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -200,6 +260,12 @@ class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
         ],
       ),
     );
+  }
+
+  String _formatTime(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   Widget _buildOptionTile(

@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../auth/providers/auth_provider.dart' show dioProvider;
@@ -119,6 +120,12 @@ class PlanHoyNotifier extends _$PlanHoyNotifier {
     );
   }
 }
+
+// ── Tarea activa lanzada desde el plan ────────────────────────────────────────
+
+/// ID de la tarea del plan actualmente en ejecución (TEST o SIMULACRO).
+/// null si no hay ninguna tarea del plan en curso.
+final planTareaActivaProvider = StateProvider<int?>((ref) => null);
 
 // ── Configuración del plan ─────────────────────────────────────────────────────
 

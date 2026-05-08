@@ -23,6 +23,8 @@ class TestResultScreen extends ConsumerWidget {
 
     final result = testState.result;
     final fallos = result.detalle.where((d) => !d.correcto).length;
+    final sinRespuesta = result.detalle.where((d) => d.respuestaUsuario == null).length;
+    final incorrectas = fallos - sinRespuesta;
 
     return Scaffold(
       appBar: AppBar(
@@ -52,7 +54,7 @@ class TestResultScreen extends ConsumerWidget {
                 child: _SummaryTile(
                   icon: Icons.cancel_outlined,
                   label: 'Incorrectas',
-                  value: '$fallos',
+                  value: '$incorrectas',
                   color: Theme.of(context).colorScheme.error,
                 ),
               ),
@@ -61,8 +63,7 @@ class TestResultScreen extends ConsumerWidget {
                 child: _SummaryTile(
                   icon: Icons.help_outline,
                   label: 'Sin resp.',
-                  value:
-                      '${result.total - result.correctas - fallos}',
+                  value: '$sinRespuesta',
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),

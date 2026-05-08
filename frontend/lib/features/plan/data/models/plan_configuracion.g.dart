@@ -12,6 +12,8 @@ PlanConfiguracion _$PlanConfiguracionFromJson(Map<String, dynamic> json) =>
       preferencia: $enumDecode(_$PreferenciaPlanEnumMap, json['preferencia']),
       fechaExamenObjetivo: json['fechaExamenObjetivo'] as String?,
       diasHastaExamen: (json['diasHastaExamen'] as num?)?.toInt(),
+      diasDisponibles: (json['diasDisponibles'] as Map<String, dynamic>?)
+          ?.map((k, v) => MapEntry(k, (v as num).toInt())),
     );
 
 Map<String, dynamic> _$PlanConfiguracionToJson(PlanConfiguracion instance) =>
@@ -20,6 +22,7 @@ Map<String, dynamic> _$PlanConfiguracionToJson(PlanConfiguracion instance) =>
       'preferencia': _$PreferenciaPlanEnumMap[instance.preferencia]!,
       'fechaExamenObjetivo': instance.fechaExamenObjetivo,
       'diasHastaExamen': instance.diasHastaExamen,
+      'diasDisponibles': instance.diasDisponibles,
     };
 
 const _$PreferenciaPlanEnumMap = {
@@ -35,6 +38,8 @@ UpdatePlanConfiguracionRequest _$UpdatePlanConfiguracionRequestFromJson(
       preferencia:
           $enumDecodeNullable(_$PreferenciaPlanEnumMap, json['preferencia']),
       fechaExamenObjetivo: json['fechaExamenObjetivo'] as String?,
+      diasDisponibles: (json['diasDisponibles'] as Map<String, dynamic>?)
+          ?.map((k, v) => MapEntry(k, (v as num).toInt())),
     );
 
 Map<String, dynamic> _$UpdatePlanConfiguracionRequestToJson(
@@ -45,4 +50,5 @@ Map<String, dynamic> _$UpdatePlanConfiguracionRequestToJson(
         'preferencia': value,
       if (instance.fechaExamenObjetivo case final value?)
         'fechaExamenObjetivo': value,
+      if (instance.diasDisponibles case final value?) 'diasDisponibles': value,
     };

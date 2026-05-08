@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../noticias/providers/noticias_provider.dart';
+import '../../perfil/providers/perfil_provider.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final b = Theme.of(context).brightness;
+    final isAdmin = ref.watch(perfilNotifierProvider).valueOrNull?.isAdmin ?? false;
     return Scaffold(
       backgroundColor: AppColors.darkBg,
       body: CustomScrollView(
@@ -23,14 +28,7 @@ class MoreScreen extends StatelessWidget {
               delegate: SliverChildListDelegate([
                 _SectionLabel('CONTENIDOS', b: b),
                 const SizedBox(height: 8),
-                _MoreCard(
-                  icon: Icons.newspaper_rounded,
-                  accentColor: AppColors.primaryFor(b),
-                  titulo: 'Noticias',
-                  subtitulo: 'Convocatorias y novedades de tu oposición',
-                  onTap: () => context.push(AppRoutes.noticias),
-                  b: b,
-                ),
+                _NoticiasCard(b: b),
                 const SizedBox(height: 8),
                 _MoreCard(
                   icon: Icons.calendar_month_rounded,
@@ -92,11 +90,49 @@ class MoreScreen extends StatelessWidget {
                   onTap: () => context.push(AppRoutes.perfil),
                   b: b,
                 ),
+                if (isAdmin) ...[
+                  const SizedBox(height: 8),
+                  _MoreCard(
+                    icon: Icons.admin_panel_settings_rounded,
+                    accentColor: AppColors.accentWarm,
+                    titulo: 'Panel Admin',
+                    subtitulo: 'Ingesta de noticias y gestión de borradores',
+                    onTap: () => context.push(AppRoutes.admin),
+                    b: b,
+                  ),
+                ],
               ]),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Tile de Noticias con badge de no leídas ────────────────────────────────────
+
+/// Tile de Noticias que muestra un badge con el número de noticias no leídas.
+/// Usa la rama principal del usuario autenticado como contexto del conteo,
+/// igual que hace NoticiasListScreen al inicializarse.
+class _NoticiasCard extends ConsumerWidget {
+  const _NoticiasCard({required this.b});
+
+  final Brightness b;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ramaId = (ref.watch(authProvider) as AuthAuthenticated?)?.ramaPrincipalId;
+    final noLeidas = ref.watch(noticiaConteosProvider(ramaId)).valueOrNull?.noLeidas ?? 0;
+
+    return _MoreCard(
+      icon: Icons.newspaper_rounded,
+      accentColor: AppColors.primaryFor(b),
+      titulo: 'Noticias',
+      subtitulo: 'Convocatorias y novedades de tu oposición',
+      onTap: () => context.push(AppRoutes.noticias),
+      badgeCount: noLeidas > 0 ? noLeidas : null,
+      b: b,
     );
   }
 }
@@ -259,6 +295,7 @@ class _MoreCard extends StatelessWidget {
     required this.subtitulo,
     required this.onTap,
     required this.b,
+    this.badgeCount,
   });
 
   final IconData icon;
@@ -267,6 +304,7 @@ class _MoreCard extends StatelessWidget {
   final String subtitulo;
   final VoidCallback onTap;
   final Brightness b;
+  final int? badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -281,14 +319,20 @@ class _MoreCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
+            Badge(
+              isLabelVisible: badgeCount != null,
+              label: Text(
+                badgeCount != null && badgeCount! > 99 ? '99+' : '$badgeCount',
               ),
-              child: Icon(icon, color: accentColor, size: 20),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: accentColor, size: 20),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

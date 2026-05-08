@@ -38,7 +38,7 @@ public interface PreguntaRepository extends JpaRepository<Pregunta, Long> {
     @Query(nativeQuery = true, value = """
             SELECT * FROM preguntas
             WHERE tema_id IN (:temaIds)
-              AND (:dificultad IS NULL OR dificultad = :dificultad)
+              AND (:dificultad IS NULL OR dificultad <= :dificultad)
             ORDER BY RANDOM()
             LIMIT :cantidad
             """)

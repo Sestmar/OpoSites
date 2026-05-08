@@ -64,4 +64,12 @@ public class NoticiaController {
         noticiaService.marcarLeida(id, user.getUsername());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/leer-todas")
+    public ResponseEntity<Void> marcarTodasLeidas(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) Long ramaId) {
+        noticiaService.marcarTodasLeidas(user.getUsername(), ramaId);
+        return ResponseEntity.noContent().build();
+    }
 }

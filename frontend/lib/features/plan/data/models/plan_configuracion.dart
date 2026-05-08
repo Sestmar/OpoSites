@@ -30,6 +30,7 @@ class PlanConfiguracion {
     required this.preferencia,
     this.fechaExamenObjetivo,
     this.diasHastaExamen,
+    this.diasDisponibles,
   });
 
   final int horasSemana;
@@ -40,6 +41,10 @@ class PlanConfiguracion {
 
   /// Días hasta el examen calculados por el backend. null si no hay fecha.
   final int? diasHastaExamen;
+
+  /// Días disponibles para estudiar: clave = "MONDAY"…"SUNDAY", valor = horas (1–8).
+  /// null = sin restricción (usuarios sin configurar).
+  final Map<String, int>? diasDisponibles;
 
   factory PlanConfiguracion.fromJson(Map<String, dynamic> json) =>
       _$PlanConfiguracionFromJson(json);
@@ -63,6 +68,7 @@ class UpdatePlanConfiguracionRequest {
     this.horasSemana,
     this.preferencia,
     this.fechaExamenObjetivo,
+    this.diasDisponibles,
   });
 
   final int? horasSemana;
@@ -70,6 +76,9 @@ class UpdatePlanConfiguracionRequest {
 
   /// Fecha en formato "YYYY-MM-DD". null = no modificar.
   final String? fechaExamenObjetivo;
+
+  /// Días disponibles. null = no modificar. Mapa vacío = quitar restricciones.
+  final Map<String, int>? diasDisponibles;
 
   Map<String, dynamic> toJson() => _$UpdatePlanConfiguracionRequestToJson(this);
 }

@@ -73,8 +73,9 @@ public class PlanService {
         Usuario usuario = findUsuario(email);
         PlanConfiguracion config = leerConfig(usuario);
 
-        if (request.getHorasSemana() != null)  config.setHorasSemana(request.getHorasSemana());
-        if (request.getPreferencia() != null)   config.setPreferencia(request.getPreferencia());
+        if (request.getHorasSemana() != null)       config.setHorasSemana(request.getHorasSemana());
+        if (request.getPreferencia() != null)        config.setPreferencia(request.getPreferencia());
+        if (request.getDiasDisponibles() != null)    config.setDiasDisponibles(request.getDiasDisponibles());
 
         usuario.setPlanManual(escribirConfig(config));
 
@@ -177,8 +178,20 @@ public class PlanService {
 
     private List<PlanTarea> generarTareasParaDia(Usuario usuario, LocalDate fecha) {
         PlanConfiguracion config = leerConfig(usuario);
-        Long ramaId = usuario.getRamaPrincipalId();
 
+        // Guard de disponibilidad: si el usuario configuró días disponibles,
+        // comprobar si este día de la semana está habilitado.
+        // null → sin restricción (compatibilidad con usuarios existentes).
+        // Clave ausente o valor 0 → día no disponible, devolver lista vacía.
+        if (config.getDiasDisponibles() != null) {
+            String diaNombre = fecha.getDayOfWeek().name(); // "MONDAY"…"SUNDAY"
+            Integer horas = config.getDiasDisponibles().get(diaNombre);
+            if (horas == null || horas <= 0) {
+                return List.of();
+            }
+        }
+
+        Long ramaId = usuario.getRamaPrincipalId();
         List<Tema> temasDebiles = resolverTemasDebiles(usuario.getId(), ramaId);
         boolean modoIntensivo = esExamenProximo(usuario);
 
@@ -368,6 +381,7 @@ public class PlanService {
                 .preferencia(config.getPreferencia())
                 .fechaExamenObjetivo(usuario.getFechaExamenObjetivo())
                 .diasHastaExamen(diasHastaExamen)
+                .diasDisponibles(config.getDiasDisponibles())
                 .build();
     }
 }

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @Data
 @Builder
@@ -14,4 +15,5 @@ public class PlanConfiguracionResponse {
     private PreferenciaPlan preferencia;
     private LocalDate fechaExamenObjetivo;
     private Long diasHastaExamen; // null si no hay fecha configurada
+    private Map<String, Integer> diasDisponibles; // null = sin restricción
 }

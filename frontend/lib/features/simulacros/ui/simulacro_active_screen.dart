@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../plan/providers/plan_provider.dart';
+import '../../plan/providers/plan_semana_provider.dart';
 import '../../tests/data/models/question_answer.dart';
 import '../../tests/data/models/test_question.dart';
 import '../../tests/data/models/test_session.dart';
@@ -77,6 +79,12 @@ class _SimulacroActiveScreenState
     ref.listen<SimulacroState>(activeSimulacroProvider, (_, next) {
       if (next is SimulacroStateCompleted) {
         _timer?.cancel();
+        // Auto-completar la tarea del plan si este simulacro fue lanzado desde él
+        final tareaId = ref.read(planTareaActivaProvider);
+        if (tareaId != null) {
+          ref.read(planSemanaProvider.notifier).completarTarea(tareaId);
+          ref.read(planTareaActivaProvider.notifier).state = null;
+        }
         context.go(AppRoutes.simulacroResultado);
       }
       if (next is SimulacroStateError) {

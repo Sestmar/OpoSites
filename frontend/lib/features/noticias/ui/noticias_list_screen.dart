@@ -132,6 +132,27 @@ class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen>
     });
   }
 
+  // ── Acciones ─────────────────────────────────────────────────────────────────
+
+  Future<void> _marcarTodas(BuildContext context) async {
+    try {
+      await ref
+          .read(noticiasListNotifierProvider.notifier)
+          .marcarTodasLeidas();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Todas las noticias marcadas como leídas')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo completar la acción')),
+        );
+      }
+    }
+  }
+
   // ── Navegación ───────────────────────────────────────────────────────────────
 
   void _openDetalle(NoticiaResumen noticia) {
@@ -149,8 +170,23 @@ class _NoticiasListScreenState extends ConsumerState<NoticiasListScreen>
     final b = Theme.of(context).brightness;
     final state = ref.watch(noticiasListNotifierProvider);
 
+    final noLeidas = ref
+        .watch(noticiaConteosProvider(_selectedRamaId))
+        .valueOrNull
+        ?.noLeidas ?? 0;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Noticias')),
+      appBar: AppBar(
+        title: const Text('Noticias'),
+        actions: [
+          if (noLeidas > 0)
+            IconButton(
+              icon: const Icon(Icons.done_all_rounded),
+              tooltip: 'Marcar todas como leídas',
+              onPressed: () => _marcarTodas(context),
+            ),
+        ],
+      ),
       body: Column(
         children: [
           // Bloque 1: selector de rama — contexto global de la vista

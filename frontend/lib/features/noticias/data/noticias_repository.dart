@@ -103,6 +103,21 @@ class NoticiasRepository {
     }
   }
 
+  /// Marca como leídas todas las noticias visibles para el usuario según [ramaId].
+  /// null = solo globales; valor = rama + globales.
+  Future<void> marcarTodasLeidas({int? ramaId}) async {
+    try {
+      await _dio.post<void>(
+        ApiEndpoints.noticiaLeerTodas,
+        queryParameters: {if (ramaId != null) 'ramaId': ramaId},
+      );
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
   // ── Error mapping ──────────────────────────────────────────────────────────
 
   ApiException _toApiException(DioException e) {

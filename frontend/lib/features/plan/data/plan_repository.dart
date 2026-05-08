@@ -42,7 +42,9 @@ class PlanRepository {
   /// El backend garantiza que los 7 días están generados antes de responder.
   Future<List<PlanHoy>> getSemana({DateTime? desde}) async {
     try {
-      final desdeStr = (desde ?? DateTime.now()).toIso8601String().substring(0, 10);
+      final hoy = desde ?? DateTime.now();
+      final lunes = hoy.subtract(Duration(days: hoy.weekday - 1));
+      final desdeStr = lunes.toIso8601String().substring(0, 10);
       final response = await _dio.get<List<dynamic>>(
         ApiEndpoints.planSemana,
         queryParameters: {'desde': desdeStr},
@@ -150,10 +152,18 @@ class PlanRepository {
       final response = await _dio.put<Map<String, dynamic>>(
         ApiEndpoints.planTareaCompletar(tareaId),
       );
+      final status = response.statusCode ?? 0;
+      if (status == 404) throw const NotFoundException('Tarea no encontrada');
+      if (status == 401) throw const UnauthorizedException();
+      if (status >= 400) {
+        final msg = (response.data?['message'] as String?) ?? 'Error del servidor';
+        throw UnknownException(msg);
+      }
       return PlanTarea.fromJson(response.data!);
     } on DioException catch (e) {
       throw _toApiException(e);
     } catch (e) {
+      if (e is ApiException) rethrow;
       throw UnknownException(e.toString());
     }
   }

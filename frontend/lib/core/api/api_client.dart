@@ -25,7 +25,7 @@ abstract final class ApiClient {
     final dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
-        connectTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 40),
         // 30 s para dar margen a respuestas lentas de Gemini IA
         receiveTimeout: const Duration(seconds: 30),
         headers: {'Content-Type': 'application/json'},
