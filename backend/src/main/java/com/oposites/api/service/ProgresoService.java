@@ -95,6 +95,33 @@ public class ProgresoService {
                 .toList();
     }
 
+    public List<EvolucionTemaSemanalDto> evolucionPorTema(String email, Long temaId, int semanas) {
+        Long usuarioId = testService.findUsuario(email).getId();
+        LocalDateTime desde = LocalDateTime.now().minusWeeks(semanas);
+
+        return progresoRepository.findEvolucionSemanalByTema(usuarioId, temaId, desde)
+                .stream()
+                .map(f -> {
+                    java.sql.Timestamp ts = (java.sql.Timestamp) f[0];
+                    LocalDate semanaDate = ts.toLocalDateTime().toLocalDate();
+                    int year = semanaDate.get(IsoFields.WEEK_BASED_YEAR);
+                    int week = semanaDate.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+                    String semanaStr = String.format("%d-W%02d", year, week);
+
+                    long total = ((Number) f[1]).longValue();
+                    long correctas = ((Number) f[2]).longValue();
+                    double pct = total == 0 ? 0.0
+                            : Math.round((double) correctas / total * 100.0 * 10.0) / 10.0;
+
+                    return EvolucionTemaSemanalDto.builder()
+                            .semana(semanaStr)
+                            .porcentajeAcierto(pct)
+                            .totalRespondidas(total)
+                            .build();
+                })
+                .toList();
+    }
+
     public RachaResponse racha(String email) {
         Long usuarioId = testService.findUsuario(email).getId();
         List<Date> dias = testSessionRepository.findDiasEstudiados(usuarioId);

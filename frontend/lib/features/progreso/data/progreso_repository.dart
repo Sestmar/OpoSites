@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/constants/api_endpoints.dart';
 import 'models/evolucion_semanal.dart';
+import 'models/evolucion_tema_semanal.dart';
 import 'models/progreso_resumen.dart';
 import 'models/progreso_tema.dart';
 import 'models/racha.dart';
@@ -77,6 +78,31 @@ class ProgresoRepository {
       );
       return (response.data ?? [])
           .map((e) => EvolucionSemanal.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
+  /// Evolución semanal de % acierto para un tema concreto.
+  ///
+  /// [temaId] obligatorio. [semanas] por defecto 4 (último mes).
+  /// La lista viene ordenada cronológicamente — úsala directamente como
+  /// fuente de [FlSpot] para fl_chart (índice = posición en eje X).
+  Future<List<EvolucionTemaSemanal>> getEvolucionTema({
+    required int temaId,
+    int semanas = 4,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        ApiEndpoints.progresoEvolucionTema,
+        queryParameters: {'temaId': temaId, 'semanas': semanas},
+      );
+      return (response.data ?? [])
+          .map((e) =>
+              EvolucionTemaSemanal.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw _toApiException(e);

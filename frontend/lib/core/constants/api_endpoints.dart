@@ -54,7 +54,8 @@ abstract final class ApiEndpoints {
   static const String progresoResumen  = '/progreso/resumen';
   static const String progresoTemas    = '/progreso/temas';
   static const String progresoEvolucion = '/progreso/evolucion';
-  static const String progresoRacha    = '/progreso/racha';
+  static const String progresoRacha         = '/progreso/racha';
+  static const String progresoEvolucionTema = '/progreso/evolucion-tema';
 
   // ── 9. Plan de estudio ───────────────────────────────────────────────────
   static const String planHoy           = '/plan/hoy';

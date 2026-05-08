@@ -148,6 +148,9 @@ class ActiveTest extends _$ActiveTest {
       state = TestStateActive(
         session: session,
         answers: _initAnswers(session.preguntas),
+        marcadas: soloMarcadas
+            ? Set.from(session.preguntas.map((q) => q.id))
+            : const {},
       );
     } on Exception catch (e) {
       state = TestStateError(e.toString());

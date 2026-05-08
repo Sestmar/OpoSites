@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/app_router.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 import '../../../../features/oposicion/data/models/rama_response.dart';
 import '../../../../features/oposicion/providers/oposicion_provider.dart';
@@ -93,15 +94,25 @@ class _SelectOposicionScreenState extends ConsumerState<SelectOposicionScreen>
     setState(() => _selecting = true);
     try {
       await ref.read(oposicionRepositoryProvider).selectRama(rama.id);
-      ref.read(authProvider.notifier).ramaSelected(rama.id);
-      if (mounted && widget.fromPerfil) {
+      if (!mounted) return;
+
+      if (widget.fromPerfil) {
+        // Flujo desde Perfil: actualizar auth y volver atrás
+        ref.read(authProvider.notifier).ramaSelected(rama.id);
         if (context.canPop()) {
           context.pop();
         } else {
-          context.go('/perfil');
+          context.go(AppRoutes.perfil);
         }
         return;
       }
+
+      // Flujo onboarding inicial: navegar a pasos extra ANTES de llamar ramaSelected.
+      // El guard permite /onboarding-extra cuando ramaPrincipalId == null.
+      // ramaSelected() se llamará desde OnboardingExtraScreen al finalizar,
+      // o bien el guard ya lo maneja porque la rama está guardada en backend.
+      context.go(AppRoutes.onboardingExtra);
+      ref.read(authProvider.notifier).ramaSelected(rama.id);
     } catch (_) {
       if (mounted) {
         setState(() => _selecting = false);

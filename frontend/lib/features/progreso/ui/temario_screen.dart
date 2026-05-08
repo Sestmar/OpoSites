@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/pressable.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../tests/providers/test_session_provider.dart';
 import '../data/models/progreso_tema.dart';
+import '../data/models/evolucion_tema_semanal.dart';
 import '../providers/progreso_provider.dart';
 
 // ── Modelo local ───────────────────────────────────────────────────────────────
@@ -216,7 +218,7 @@ class _Body extends ConsumerWidget {
 
 // ── Tarjeta de tema individual ─────────────────────────────────────────────────
 
-class _TemaCard extends StatelessWidget {
+class _TemaCard extends ConsumerWidget {
   const _TemaCard({
     required this.tema,
     required this.progreso,
@@ -232,7 +234,7 @@ class _TemaCard extends StatelessWidget {
   final Future<void> Function(int ramaId, int temaId) onPracticar;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final b = Theme.of(context).brightness;
     final pct = progreso?.porcentajeAcierto ?? 0.0;
     final hasData = progreso != null && progreso!.totalRespondidas > 0;
@@ -384,6 +386,9 @@ class _TemaCard extends StatelessWidget {
                 ),
               ],
             ),
+
+            // Mini gráfica de evolución (solo visible con ≥ 2 puntos de datos)
+            _MiniEvolucionChart(temaId: tema.id),
           ],
         ),
       ),
@@ -395,5 +400,140 @@ class _TemaCard extends StatelessWidget {
     if (pct >= 50) return AppColors.accentWarm;
     if (pct > 0)  return AppColors.accentRose;
     return AppColors.textFaintFor(b);
+  }
+}
+
+// ── Mini gráfica de evolución semanal ─────────────────────────────────────────
+//
+// ConsumerWidget que recibe el temaId y watch evolucionTemaProvider.
+// Se renderiza solo si hay ≥ 2 puntos de datos; de lo contrario, SizedBox.shrink().
+
+class _MiniEvolucionChart extends ConsumerWidget {
+  const _MiniEvolucionChart({required this.temaId});
+  final int temaId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(evolucionTemaProvider(temaId));
+
+    return async.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (puntos) {
+        if (puntos.length < 2) return const SizedBox.shrink();
+
+        final b = Theme.of(context).brightness;
+        final teal = AppColors.primaryFor(b);
+
+        final spots = puntos
+            .asMap()
+            .entries
+            .map((e) => FlSpot(e.key.toDouble(), e.value.porcentajeAcierto))
+            .toList();
+
+        // Label de semana corto: "2026-W17" → "W17"
+        String shortLabel(String semana) {
+          final parts = semana.split('-');
+          return parts.length == 2 ? parts[1] : semana;
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'EVOLUCIÓN',
+                style: AppText.label.copyWith(
+                  color: AppColors.textMutedFor(b),
+                  fontSize: 10,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 52,
+                child: LineChart(
+                  LineChartData(
+                    minY: 0,
+                    maxY: 100,
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 16,
+                          getTitlesWidget: (value, meta) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= puntos.length) {
+                              return const SizedBox.shrink();
+                            }
+                            return Text(
+                              shortLabel(puntos[idx].semana),
+                              style: AppText.label.copyWith(
+                                color: AppColors.textFaintFor(b),
+                                fontSize: 9,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            final idx = spot.x.toInt();
+                            final semana = idx < puntos.length
+                                ? shortLabel(puntos[idx].semana)
+                                : '';
+                            return LineTooltipItem(
+                              '$semana · ${spot.y.toStringAsFixed(0)}%',
+                              AppText.label.copyWith(color: Colors.white),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots,
+                        isCurved: true,
+                        curveSmoothness: 0.3,
+                        color: teal,
+                        barWidth: 2,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, pct, bar, idx) =>
+                              FlDotCirclePainter(
+                            radius: 3,
+                            color: teal,
+                            strokeWidth: 0,
+                          ),
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: teal.withOpacity(0.08),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

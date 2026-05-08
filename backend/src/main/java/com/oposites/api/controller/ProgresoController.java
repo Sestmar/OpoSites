@@ -1,6 +1,7 @@
 package com.oposites.api.controller;
 
 import com.oposites.api.model.dto.response.EvolucionSemanalDto;
+import com.oposites.api.model.dto.response.EvolucionTemaSemanalDto;
 import com.oposites.api.model.dto.response.ProgresoResumenResponse;
 import com.oposites.api.model.dto.response.ProgresoTemaResponse;
 import com.oposites.api.model.dto.response.RachaResponse;
@@ -47,5 +48,14 @@ public class ProgresoController {
     public ResponseEntity<RachaResponse> racha(
             @AuthenticationPrincipal UserDetails user) {
         return ResponseEntity.ok(progresoService.racha(user.getUsername()));
+    }
+
+    @GetMapping("/evolucion-tema")
+    public ResponseEntity<List<EvolucionTemaSemanalDto>> evolucionTema(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam Long temaId,
+            @RequestParam(defaultValue = "4") int semanas) {
+        return ResponseEntity.ok(
+                progresoService.evolucionPorTema(user.getUsername(), temaId, semanas));
     }
 }

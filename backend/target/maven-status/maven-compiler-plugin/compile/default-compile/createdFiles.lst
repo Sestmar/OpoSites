@@ -7,6 +7,7 @@ com\oposites\api\config\CorsConfig.class
 com\oposites\api\model\dto\response\ProgresoResumenResponse.class
 com\oposites\api\model\dto\request\RefreshTokenRequest.class
 com\oposites\api\repository\NoticiaConvocatoriaRepository.class
+com\oposites\api\model\dto\response\EvolucionTemaSemanalDto.class
 com\oposites\api\controller\UsuarioController.class
 com\oposites\api\model\dto\response\EvolucionSemanalDto$EvolucionSemanalDtoBuilder.class
 com\oposites\api\model\entity\Simulacro.class
@@ -138,6 +139,7 @@ com\oposites\api\service\NoticiaIngestionService.class
 com\oposites\api\model\dto\response\ResultadoPreguntaDto$ResultadoPreguntaDtoBuilder.class
 com\oposites\api\controller\PreguntaMarcadaController.class
 com\oposites\api\service\SimulacroService.class
+com\oposites\api\model\dto\response\EvolucionTemaSemanalDto$EvolucionTemaSemanalDtoBuilder.class
 com\oposites\api\model\dto\response\ResultadoPreguntaDto.class
 com\oposites\api\model\dto\response\PreguntasMarcadasConteoResponse.class
 com\oposites\api\security\JwtFilter.class

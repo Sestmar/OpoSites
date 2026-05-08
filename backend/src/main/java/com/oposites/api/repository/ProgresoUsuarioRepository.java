@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -65,6 +66,27 @@ public interface ProgresoUsuarioRepository extends JpaRepository<ProgresoUsuario
     List<Long> findTemaIdsOrdenadosPorDebilidad(@Param("usuarioId") Long usuarioId,
                                                 @Param("ramaId") Long ramaId,
                                                 Pageable pageable);
+
+    /**
+     * Evolución semanal de aciertos para un tema específico.
+     * Retorna filas [semanaInicio:Timestamp, total:Long, correctas:Long].
+     * Solo incluye semanas con al menos una respuesta desde [desde].
+     */
+    @Query(value = """
+            SELECT DATE_TRUNC('week', pu.fecha_respuesta) AS semana,
+                   COUNT(*)                               AS total,
+                   SUM(CASE WHEN pu.correcto THEN 1 ELSE 0 END) AS correctas
+            FROM   progreso_usuario pu
+            JOIN   preguntas pr ON pu.pregunta_id = pr.id
+            WHERE  pu.usuario_id        = :usuarioId
+              AND  pr.tema_id           = :temaId
+              AND  pu.fecha_respuesta  >= :desde
+            GROUP  BY DATE_TRUNC('week', pu.fecha_respuesta)
+            ORDER  BY 1 ASC
+            """, nativeQuery = true)
+    List<Object[]> findEvolucionSemanalByTema(@Param("usuarioId") Long usuarioId,
+                                              @Param("temaId") Long temaId,
+                                              @Param("desde") LocalDateTime desde);
 
     /**
      * IDs de temas que el usuario ya ha practicado (al menos una respuesta).

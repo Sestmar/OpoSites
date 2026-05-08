@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
 import '../data/models/plan_configuracion.dart';
 import '../providers/plan_provider.dart';
+import '../providers/plan_semana_provider.dart';
 
 // ── Pantalla principal ─────────────────────────────────────────────────────────
 
@@ -73,6 +74,43 @@ class _PlanConfigScreenState extends ConsumerState<PlanConfigScreen> {
           : {};
       _formInitialized = true;
     });
+  }
+
+  Future<void> _pickFecha() async {
+    final now = DateTime.now();
+    final initial = DateTime.tryParse(_fechaExamenCtrl.text.trim()) ?? now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isAfter(now) ? initial : now,
+      firstDate: now,
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked != null) {
+      _fechaExamenCtrl.text =
+          '${picked.year.toString().padLeft(4, '0')}-'
+          '${picked.month.toString().padLeft(2, '0')}-'
+          '${picked.day.toString().padLeft(2, '0')}';
+    }
+  }
+
+  Future<void> _regenerarPlan() async {
+    await ref.read(planHoyNotifierProvider.notifier).regenerarPlan();
+    if (!mounted) return;
+
+    final st = ref.read(planHoyNotifierProvider);
+    if (st.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al regenerar: ${st.error}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      ref.invalidate(planSemanaProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Plan regenerado correctamente')),
+      );
+    }
   }
 
   Future<void> _guardar() async {
@@ -167,6 +205,8 @@ class _PlanConfigScreenState extends ConsumerState<PlanConfigScreen> {
               });
             },
             onGuardar: _guardar,
+            onFechaExamenTap: _pickFecha,
+            onRegenerarPlan: _regenerarPlan,
           );
         },
       ),
@@ -188,6 +228,8 @@ class _ConfigForm extends StatelessWidget {
     required this.onGuardar,
     this.diasHastaExamen,
     this.isSaving = false,
+    this.onFechaExamenTap,
+    this.onRegenerarPlan,
   });
 
   final TextEditingController horasSemanaCtrl;
@@ -200,6 +242,8 @@ class _ConfigForm extends StatelessWidget {
   final ValueChanged<String> onDiaToggled;
   final void Function(String key, int horas) onHorasChanged;
   final VoidCallback onGuardar;
+  final VoidCallback? onFechaExamenTap;
+  final VoidCallback? onRegenerarPlan;
 
   @override
   Widget build(BuildContext context) {
@@ -445,15 +489,17 @@ class _ConfigForm extends StatelessWidget {
               const SizedBox(height: 12),
               TextField(
                 controller: fechaExamenCtrl,
+                readOnly: true,
+                onTap: onFechaExamenTap,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.surfaceFor(b),
-                  hintText: 'AAAA-MM-DD',
+                  hintText: 'Seleccioná una fecha',
                   hintStyle: TextStyle(color: AppColors.textFaintFor(b)),
                   suffixIcon: Icon(
                     Icons.calendar_today_outlined,
                     size: 18,
-                    color: AppColors.textFaintFor(b),
+                    color: AppColors.primaryFor(b),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -501,6 +547,15 @@ class _ConfigForm extends StatelessWidget {
                 )
               : const Text('Guardar cambios'),
         ),
+        const SizedBox(height: 10),
+
+        // ── Regenerar plan ────────────────────────────────────────────
+        if (onRegenerarPlan != null)
+          OutlinedButton.icon(
+            onPressed: isSaving ? null : onRegenerarPlan,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Regenerar plan'),
+          ),
       ],
     );
   }

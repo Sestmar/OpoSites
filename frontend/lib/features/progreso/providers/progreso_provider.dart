@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../auth/providers/auth_provider.dart' show dioProvider;
 import '../data/models/evolucion_semanal.dart';
+import '../data/models/evolucion_tema_semanal.dart';
 import '../data/models/progreso_resumen.dart';
 import '../data/models/progreso_tema.dart';
 import '../data/models/racha.dart';
@@ -87,6 +88,17 @@ class ProgresoEvolucion extends _$ProgresoEvolucion {
     );
   }
 }
+
+/// Evolución semanal de % acierto para un tema concreto (últimas 4 semanas).
+///
+/// autoDispose.family: se crea al montar la card del tema y se libera al
+/// scrollear fuera de pantalla — cada card solo hace UNA llamada HTTP.
+/// El parámetro es [temaId].
+final evolucionTemaProvider =
+    FutureProvider.autoDispose.family<List<EvolucionTemaSemanal>, int>(
+  (ref, temaId) =>
+      ref.read(progresoRepositoryProvider).getEvolucionTema(temaId: temaId),
+);
 
 /// Racha actual y mejor racha del usuario.
 ///

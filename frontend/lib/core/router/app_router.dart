@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/auth/presentation/screens/onboarding_extra_screen.dart';
 import '../../features/auth/presentation/screens/select_oposicion_screen.dart';
 import '../../features/perfil/ui/perfil_screen.dart';
 import '../../features/perfil/ui/editar_perfil_screen.dart';
@@ -51,7 +52,8 @@ abstract final class AppRoutes {
   static const splash          = '/splash';
   static const login           = '/login';
   static const register        = '/register';
-  static const selectOposicion = '/select-oposicion';
+  static const selectOposicion  = '/select-oposicion';
+  static const onboardingExtra  = '/onboarding-extra';
 
   // ── Tab raíces (dentro del shell) ──────────────────────────────────────────
   static const home      = '/home';
@@ -130,19 +132,22 @@ GoRouter appRouter(AppRouterRef ref) {
       final authState = ref.read(authProvider);
       final loc = state.matchedLocation;
 
-      final isAuthRoute     = loc == AppRoutes.login || loc == AppRoutes.register;
-      final isSplash        = loc == AppRoutes.splash;
+      final isAuthRoute       = loc == AppRoutes.login || loc == AppRoutes.register;
+      final isSplash          = loc == AppRoutes.splash;
       final isSelectOposicion = loc == AppRoutes.selectOposicion;
+      final isOnboardingExtra = loc == AppRoutes.onboardingExtra;
 
       return switch (authState) {
         AuthInitial() || AuthLoading() =>
           isSplash ? null : AppRoutes.splash,
 
-        // Sin rama → onboarding obligatorio antes del home
+        // Sin rama → solo se permite estar en select-oposicion o en onboarding-extra
+        // (el usuario ya hizo POST selectRama pero aún no llamó ramaSelected)
         AuthAuthenticated(ramaPrincipalId: null) =>
-          isSelectOposicion ? null : AppRoutes.selectOposicion,
+          (isSelectOposicion || isOnboardingExtra) ? null : AppRoutes.selectOposicion,
 
         // Con rama (o -1 por fallo de red) → home normal
+        // /onboarding-extra no está en la lista → devuelve null → deja pasar
         AuthAuthenticated() =>
           (isAuthRoute || isSplash || isSelectOposicion) ? AppRoutes.home : null,
 
@@ -168,6 +173,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: AppRoutes.selectOposicion,
         builder: (_, __) => const SelectOposicionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingExtra,
+        builder: (_, __) => const OnboardingExtraScreen(),
       ),
 
       // ── Tests — flujo inmersivo (fuera del shell) ────────────────────────
