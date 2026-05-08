@@ -6,6 +6,7 @@ import '../data/models/test_question.dart';
 import '../data/models/test_result.dart';
 import '../data/models/test_session.dart';
 import '../data/tests_repository.dart';
+import 'pregunta_marcada_provider.dart';
 
 part 'test_session_provider.g.dart';
 
@@ -35,14 +36,17 @@ final class TestStateLoading extends TestState {
 ///
 /// [answers] se inicializa con respuestas null (una por pregunta) y se
 /// actualiza con cada llamada a [ActiveTest.seleccionarRespuesta].
+/// [marcadas] contiene los IDs de preguntas marcadas para repaso en esta sesión.
 final class TestStateActive extends TestState {
   const TestStateActive({
     required this.session,
     required this.answers,
+    this.marcadas = const {},
   });
 
   final TestSession session;
   final List<QuestionAnswer> answers;
+  final Set<int> marcadas;
 
   /// Número de preguntas ya respondidas (respuestaUsuario != null).
   int get respondidas =>
@@ -59,6 +63,15 @@ final class TestStateActive extends TestState {
                 )
               : a)
           .toList(),
+      marcadas: marcadas,
+    );
+  }
+
+  TestStateActive copyWithMarcadas(Set<int> nuevasMarcadas) {
+    return TestStateActive(
+      session: session,
+      answers: answers,
+      marcadas: nuevasMarcadas,
     );
   }
 }
@@ -78,9 +91,12 @@ final class TestStateSubmitting extends TestState {
 }
 
 /// Test completado con resultados disponibles.
+///
+/// [marcadasCount] indica cuántas preguntas se marcaron durante esta sesión.
 final class TestStateCompleted extends TestState {
-  const TestStateCompleted({required this.result});
+  const TestStateCompleted({required this.result, this.marcadasCount = 0});
   final TestResult result;
+  final int marcadasCount;
 }
 
 /// Error ocurrido durante la generación o el envío.
@@ -110,12 +126,14 @@ class ActiveTest extends _$ActiveTest {
   /// [temaIds] null o vacío = todas las preguntas de la rama.
   /// [dificultad] null = sin filtro.
   /// [tiempoMinutos] null = sin límite.
+  /// [soloMarcadas] true = ignora filtros y usa las preguntas marcadas del usuario.
   Future<void> generarTest({
     required int ramaId,
     List<int>? temaIds,
     int cantidad = 10,
     int? dificultad,
     int? tiempoMinutos,
+    bool soloMarcadas = false,
   }) async {
     state = const TestStateLoading();
     try {
@@ -125,6 +143,7 @@ class ActiveTest extends _$ActiveTest {
             cantidad: cantidad,
             dificultad: dificultad,
             tiempoMinutos: tiempoMinutos,
+            soloMarcadas: soloMarcadas,
           );
       state = TestStateActive(
         session: session,
@@ -157,6 +176,8 @@ class ActiveTest extends _$ActiveTest {
     final current = state;
     if (current is! TestStateActive) return;
 
+    final marcadasCount = current.marcadas.length;
+
     state = TestStateSubmitting(
       session: current.session,
       answers: current.answers,
@@ -167,17 +188,50 @@ class ActiveTest extends _$ActiveTest {
             sessionId: current.session.sessionId,
             respuestas: current.answers,
           );
-      state = TestStateCompleted(result: result);
+      state = TestStateCompleted(result: result, marcadasCount: marcadasCount);
     } on Exception catch (e) {
       // En caso de error volvemos a Active para que el usuario pueda reintentar.
       state = TestStateActive(
         session: current.session,
         answers: current.answers,
+        marcadas: current.marcadas,
       );
-      // Emitimos el error como estado transitorio para que la UI lo muestre.
-      // (Solución pragmática: si la UI necesita un estado de error post-submit
-      //  separado, añadir TestStateSubmitError en el futuro.)
       state = TestStateError(e.toString());
+    }
+  }
+
+  // ── Marcadas ───────────────────────────────────────────────────────────────
+
+  /// Alterna el estado de marcado de [preguntaId].
+  ///
+  /// Actualiza el estado local de forma optimista y dispara el POST o DELETE
+  /// al backend en paralelo. Si la llamada falla, el estado local se revierte.
+  Future<void> toggleMarcada(int preguntaId) async {
+    final current = state;
+    if (current is! TestStateActive) return;
+
+    final estabaMarcada = current.marcadas.contains(preguntaId);
+    final nuevasMarcadas = Set<int>.from(current.marcadas);
+
+    if (estabaMarcada) {
+      nuevasMarcadas.remove(preguntaId);
+    } else {
+      nuevasMarcadas.add(preguntaId);
+    }
+
+    // Actualización optimista
+    state = current.copyWithMarcadas(nuevasMarcadas);
+
+    try {
+      final repo = ref.read(preguntaMarcadaRepositoryProvider);
+      if (estabaMarcada) {
+        await repo.desmarcar(preguntaId);
+      } else {
+        await repo.marcar(preguntaId);
+      }
+    } on Exception {
+      // Revertir si el backend falla
+      state = current.copyWithMarcadas(current.marcadas);
     }
   }
 

@@ -133,6 +133,9 @@ class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
     );
     final selectedOption = currentAnswer.respuestaUsuario;
 
+    final marcadas = state is TestStateActive ? state.marcadas : const <int>{};
+    final esMarcada = marcadas.contains(question.id);
+
     final isFirst = _currentIndex == 0;
     final isLast = _currentIndex == total - 1;
 
@@ -158,6 +161,23 @@ class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
                 ),
               ),
             ),
+          // Bookmark: marcar/desmarcar para repaso
+          IconButton(
+            icon: Icon(
+              esMarcada
+                  ? Icons.bookmark_rounded
+                  : Icons.bookmark_border_rounded,
+              color: esMarcada
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            tooltip: esMarcada ? 'Desmarcar pregunta' : 'Marcar para repasar',
+            onPressed: isSubmitting
+                ? null
+                : () => ref
+                    .read(activeTestProvider.notifier)
+                    .toggleMarcada(question.id),
+          ),
           // Progreso rápido: X respondidas
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

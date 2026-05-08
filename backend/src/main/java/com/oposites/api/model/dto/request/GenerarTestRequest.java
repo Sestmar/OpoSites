@@ -26,4 +26,7 @@ public class GenerarTestRequest {
     // null = sin límite de tiempo en el cliente
     @Positive
     private Integer tiempoMinutos;
+
+    // true = ignorar temas/dificultad/cantidad y usar preguntas marcadas del usuario
+    private Boolean soloMarcadas;
 }

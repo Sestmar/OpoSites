@@ -47,6 +47,22 @@ public interface PreguntaRepository extends JpaRepository<Pregunta, Long> {
                                        @Param("cantidad") int cantidad);
 
     /**
+     * Preguntas marcadas por el usuario en una rama concreta, ordenadas aleatoriamente.
+     * Máximo 50 para evitar tests excesivamente largos.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT p.* FROM preguntas p
+            JOIN preguntas_marcadas pm ON pm.pregunta_id = p.id
+            JOIN temas t ON t.id = p.tema_id
+            WHERE pm.usuario_id = :usuarioId
+              AND t.rama_id = :ramaId
+            ORDER BY RANDOM()
+            LIMIT 50
+            """)
+    List<Pregunta> findRandomMarcadasByUsuario(@Param("usuarioId") Long usuarioId,
+                                               @Param("ramaId") Long ramaId);
+
+    /**
      * Carga preguntas con su tema en un solo JOIN para evitar N+1
      * al calcular analisisPorTema en simulacros.
      */

@@ -94,7 +94,11 @@ abstract final class ApiEndpoints {
   static String documentoTestPorId(int docId, int testId) =>
       '/documentos/$docId/test/$testId';
 
-  // ── 15. Admin — Noticias ──────────────────────────────────────────────────
+  // ── 15. Preguntas marcadas ────────────────────────────────────────────────
+  static String preguntaMarcar(int id)            => '/preguntas/$id/marcar';
+  static const String preguntasMarcadasConteo     = '/preguntas/marcadas/conteo';
+
+  // ── 16. Admin — Noticias ──────────────────────────────────────────────────
   static const String adminNoticiasBorradores = '/admin/noticias/borradores';
   static const String adminNoticiasIngesta    = '/admin/noticias/ingesta/ejecutar';
   static String adminNoticiaEstado(int id)    => '/admin/noticias/$id/estado';

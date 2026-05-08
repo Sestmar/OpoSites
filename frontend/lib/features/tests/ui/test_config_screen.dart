@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../auth/providers/auth_provider.dart' show dioProvider;
+import '../providers/pregunta_marcada_provider.dart';
 import '../providers/test_session_provider.dart';
 
 // ── Modelos inline ─────────────────────────────────────────────────────────────
@@ -158,6 +159,12 @@ class _TestConfigScreenState extends ConsumerState<TestConfigScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ── Repasar marcadas ────────────────────────────────────────────
+              _RepasarMarcadasCard(
+                selectedRamaId: _selectedRamaId,
+                isLoading: isLoading,
+              ),
+
               // ── Oposición ──────────────────────────────────────────────────
               AppCard(
                 child: Column(
@@ -392,6 +399,97 @@ class _TestConfigScreenState extends ConsumerState<TestConfigScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Card "Repasar marcadas" ────────────────────────────────────────────────────
+
+/// Muestra el total de preguntas marcadas y permite lanzar un repaso directo.
+/// Solo visible cuando hay marcadas. Requiere que el usuario haya seleccionado
+/// una oposición para generar el test de repaso.
+class _RepasarMarcadasCard extends ConsumerWidget {
+  const _RepasarMarcadasCard({
+    required this.selectedRamaId,
+    required this.isLoading,
+  });
+
+  final int? selectedRamaId;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final b = Theme.of(context).brightness;
+    // Conteo global (null ramaId) para mostrar siempre que haya marcadas
+    final conteoAsync = ref.watch(preguntasMarcadasConteoProvider(null));
+
+    return conteoAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (total) {
+        if (total == 0) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppCard(
+              color: AppColors.primarySoftFor(b),
+              border: Border.all(
+                color: AppColors.primaryFor(b).withOpacity(0.25),
+                width: 1,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.bookmark_rounded,
+                    color: AppColors.primaryFor(b),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$total pregunta${total > 1 ? 's' : ''} marcada${total > 1 ? 's' : ''}',
+                          style: AppText.cardTitle
+                              .copyWith(color: AppColors.textFor(b)),
+                        ),
+                        Text(
+                          selectedRamaId == null
+                              ? 'Seleccioná una oposición para repasar'
+                              : 'Repasar preguntas de esta oposición',
+                          style: AppText.caption
+                              .copyWith(color: AppColors.textMutedFor(b)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton(
+                    onPressed: (isLoading || selectedRamaId == null)
+                        ? null
+                        : () => ref
+                            .read(activeTestProvider.notifier)
+                            .generarTest(
+                              ramaId: selectedRamaId!,
+                              soloMarcadas: true,
+                            ),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Repasar'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      },
     );
   }
 }

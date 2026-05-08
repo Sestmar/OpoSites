@@ -35,6 +35,7 @@ class TestsRepository {
     int cantidad = 10,
     int? dificultad,
     int? tiempoMinutos,
+    bool soloMarcadas = false,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -43,6 +44,7 @@ class TestsRepository {
         if (temaIds != null && temaIds.isNotEmpty) 'temaIds': temaIds,
         if (dificultad != null) 'dificultad': dificultad,
         if (tiempoMinutos != null) 'tiempoMinutos': tiempoMinutos,
+        if (soloMarcadas) 'soloMarcadas': true,
       };
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.testsGenerar,

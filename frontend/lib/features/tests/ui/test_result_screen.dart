@@ -22,6 +22,7 @@ class TestResultScreen extends ConsumerWidget {
     }
 
     final result = testState.result;
+    final marcadasCount = testState.marcadasCount;
     final fallos = result.detalle.where((d) => !d.correcto).length;
     final sinRespuesta = result.detalle.where((d) => d.respuestaUsuario == null).length;
     final incorrectas = fallos - sinRespuesta;
@@ -81,6 +82,24 @@ class TestResultScreen extends ConsumerWidget {
                 ),
               ),
           const SizedBox(height: 24),
+
+          // ── Marcadas para repaso ─────────────────────────────────────────
+          if (marcadasCount > 0) ...[
+            const SizedBox(height: 4),
+            ListTile(
+              leading: Icon(
+                Icons.bookmark_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(
+                '$marcadasCount pregunta${marcadasCount > 1 ? 's' : ''} marcada${marcadasCount > 1 ? 's' : ''} para repasar',
+              ),
+              subtitle: const Text('Podés repasar desde "Practicar"'),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+            ),
+            const SizedBox(height: 8),
+          ],
 
           // ── Acciones ─────────────────────────────────────────────────────
           if (fallos > 0)

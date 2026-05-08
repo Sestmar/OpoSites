@@ -16,6 +16,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\OposicionController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\PlanController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\PreguntaController.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\PreguntaMarcadaController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\ProgresoController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\SimulacroController.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\controller\TemaController.java
@@ -72,6 +73,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\PlanTareaResponse.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\PreguntaResponse.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\PreguntaRespuestaResponse.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\PreguntasMarcadasConteoResponse.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\ProgresoResumenResponse.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\ProgresoTemaResponse.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\dto\response\RachaResponse.java
@@ -96,6 +98,8 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\NoticiaLeidaId.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\PlanTarea.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\Pregunta.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\PreguntaMarcada.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\PreguntaMarcadaId.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\ProgresoUsuario.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\RamaOposicion.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\model\entity\RefreshToken.java
@@ -126,6 +130,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\NoticiaConvocatoriaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\NoticiaLeidaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\PlanTareaRepository.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\PreguntaMarcadaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\PreguntaRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\ProgresoUsuarioRepository.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\repository\RamaOposicionRepository.java
@@ -150,6 +155,7 @@ C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\c
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\NoticiaIngestionService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\NoticiaService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\PlanService.java
+C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\PreguntaMarcadaService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\PreguntaService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\ProgresoService.java
 C:\Users\Usuario\Documents\proyectos-personales\opoSites\backend\src\main\java\com\oposites\api\service\RamaOposicionService.java

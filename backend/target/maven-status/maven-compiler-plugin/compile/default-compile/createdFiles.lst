@@ -52,6 +52,8 @@ com\oposites\api\model\entity\Simulacro$SimulacroBuilder.class
 com\oposites\api\repository\RamaOposicionRepository.class
 com\oposites\api\model\dto\response\PlanConfiguracionResponse.class
 com\oposites\api\model\entity\TestSession$TestSessionBuilder.class
+com\oposites\api\model\entity\PreguntaMarcada$PreguntaMarcadaBuilder.class
+com\oposites\api\repository\PreguntaMarcadaRepository.class
 com\oposites\api\model\dto\response\ConversacionResponse.class
 com\oposites\api\model\entity\ChatMensaje$ChatMensajeBuilder.class
 com\oposites\api\model\entity\NoticiaConvocatoria$NoticiaConvocatoriaBuilder.class
@@ -102,6 +104,7 @@ com\oposites\api\model\dto\response\PlanHoyResponse.class
 com\oposites\api\controller\AdminPreguntaController.class
 com\oposites\api\service\RamaOposicionService.class
 com\oposites\api\model\entity\RamaOposicion.class
+com\oposites\api\model\entity\PreguntaMarcadaId.class
 com\oposites\api\model\dto\response\TemaResponse$TemaResponseBuilder.class
 com\oposites\api\model\entity\CalendarioEvento.class
 com\oposites\api\model\dto\response\EventoResponse.class
@@ -133,8 +136,10 @@ com\oposites\api\model\enums\EstadoEditorialNoticia.class
 com\oposites\api\validation\StrongPasswordValidator.class
 com\oposites\api\service\NoticiaIngestionService.class
 com\oposites\api\model\dto\response\ResultadoPreguntaDto$ResultadoPreguntaDtoBuilder.class
+com\oposites\api\controller\PreguntaMarcadaController.class
 com\oposites\api\service\SimulacroService.class
 com\oposites\api\model\dto\response\ResultadoPreguntaDto.class
+com\oposites\api\model\dto\response\PreguntasMarcadasConteoResponse.class
 com\oposites\api\security\JwtFilter.class
 com\oposites\api\exception\AppException.class
 com\oposites\api\model\chat\ConversacionContexto$ConversacionContextoBuilder.class
@@ -186,6 +191,7 @@ com\oposites\api\model\entity\ProgresoUsuario$ProgresoUsuarioBuilder.class
 com\oposites\api\model\entity\NoticiaLeida$NoticiaLeidaBuilder.class
 com\oposites\api\repository\ChatMensajeRepository.class
 com\oposites\api\controller\OposicionController.class
+com\oposites\api\model\entity\PreguntaMarcada.class
 com\oposites\api\model\dto\response\MensajeResponse$MensajeResponseBuilder.class
 com\oposites\api\model\entity\CalendarioEvento$CalendarioEventoBuilder.class
 com\oposites\api\service\PreguntaService.class
@@ -197,6 +203,7 @@ com\oposites\api\model\dto\response\TemaResponse.class
 com\oposites\api\model\dto\response\TestIniciadoResponse.class
 com\oposites\api\security\ratelimit\AuthRateLimitFilter.class
 com\oposites\api\model\dto\response\DocumentoTestPreguntaResponse$DocumentoTestPreguntaResponseBuilder.class
+com\oposites\api\service\PreguntaMarcadaService.class
 com\oposites\api\model\dto\response\EnviarMensajeResponse.class
 com\oposites\api\model\entity\MaterialGenerado.class
 com\oposites\api\model\entity\RefreshToken.class

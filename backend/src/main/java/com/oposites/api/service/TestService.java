@@ -30,6 +30,7 @@ public class TestService {
     private final ProgresoUsuarioRepository progresoRepository;
     private final UsuarioRepository usuarioRepository;
     private final CalendarioService calendarioService;
+    private final PreguntaMarcadaRepository preguntaMarcadaRepository;
 
     // ─── Tests libres ─────────────────────────────────────────────────────────
 
@@ -39,13 +40,22 @@ public class TestService {
         RamaOposicion rama = ramaRepository.findById(request.getRamaId())
                 .orElseThrow(() -> new AppException("Oposición no encontrada", HttpStatus.NOT_FOUND));
 
-        List<Long> temaIds = resolveTemaIds(request.getRamaId(), request.getTemaIds());
-
-        List<Pregunta> preguntas = preguntaRepository.findRandomByTemaIds(
-                temaIds, request.getDificultad(), request.getCantidad());
-
-        if (preguntas.isEmpty()) {
-            throw new AppException("No hay preguntas disponibles con esos filtros", HttpStatus.BAD_REQUEST);
+        final List<Pregunta> preguntas;
+        if (Boolean.TRUE.equals(request.getSoloMarcadas())) {
+            preguntas = preguntaRepository.findRandomMarcadasByUsuario(
+                    usuario.getId(), request.getRamaId());
+            if (preguntas.isEmpty()) {
+                throw new AppException(
+                        "No tenés preguntas marcadas para esta oposición", HttpStatus.BAD_REQUEST);
+            }
+        } else {
+            List<Long> temaIds = resolveTemaIds(request.getRamaId(), request.getTemaIds());
+            preguntas = preguntaRepository.findRandomByTemaIds(
+                    temaIds, request.getDificultad(), request.getCantidad());
+            if (preguntas.isEmpty()) {
+                throw new AppException(
+                        "No hay preguntas disponibles con esos filtros", HttpStatus.BAD_REQUEST);
+            }
         }
 
         List<Long> preguntaIds = preguntas.stream().map(Pregunta::getId).toList();
