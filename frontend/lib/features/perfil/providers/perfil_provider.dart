@@ -43,10 +43,7 @@ class PerfilNotifier extends AutoDisposeAsyncNotifier<UsuarioMe> {
   }
 
   Future<void> deleteAccount() async {
-    state = const AsyncLoading();
-    await AsyncValue.guard(
-      () => ref.read(perfilRepositoryProvider).deleteMe(),
-    );
+    await ref.read(perfilRepositoryProvider).deleteMe();
   }
 }
 
