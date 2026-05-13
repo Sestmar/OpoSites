@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../documentos/data/models/documento.dart';
+import '../../documentos/providers/documentos_provider.dart';
 import '../data/models/conversacion_resumen.dart';
 import '../providers/chat_providers.dart';
 
@@ -27,10 +29,16 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   Future<void> _nuevaConversacion() async {
     if (_creando) return;
+
+    // 1.4 + 1.6 — Mostrar selector de documento y modo antes de crear
+    final config = await _seleccionarConfig();
+    if (!mounted || config == null) return;
+
     setState(() => _creando = true);
     try {
-      final id =
-          await ref.read(conversacionesListNotifierProvider.notifier).crear();
+      final id = await ref
+          .read(conversacionesListNotifierProvider.notifier)
+          .crear(documentoId: config.$1, modo: config.$2);
       if (mounted) context.push(AppRoutes.chatDetalle(id));
     } catch (_) {
       if (mounted) {
@@ -41,6 +49,22 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     } finally {
       if (mounted) setState(() => _creando = false);
     }
+  }
+
+  /// Muestra un bottom sheet para que el usuario elija documento y modo.
+  /// Devuelve (documentoId, modo) o null si el usuario cancela.
+  Future<(int?, String)?> _seleccionarConfig() async {
+    final documentos =
+        ref.read(documentosNotifierProvider).valueOrNull ?? [];
+
+    return showModalBottomSheet<(int?, String)>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => _DocumentoSelectorSheet(documentos: documentos),
+    );
   }
 
   Future<void> _eliminar(int id) async {
@@ -177,17 +201,25 @@ class _ConversacionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fecha = DateFormat('d MMM yyyy', 'es').format(conversacion.createdAt);
+    final esExaminador = conversacion.modo == 'EXAMINADOR';
 
     return ListTile(
       leading: Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.blueGrey.withOpacity(0.12),
+          color: esExaminador
+              ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5)
+              : Colors.blueGrey.withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.smart_toy_outlined,
-            color: Colors.blueGrey, size: 22),
+        child: Icon(
+          esExaminador ? Icons.school_outlined : Icons.smart_toy_outlined,
+          color: esExaminador
+              ? Theme.of(context).colorScheme.tertiary
+              : Colors.blueGrey,
+          size: 22,
+        ),
       ),
       title: Text(
         conversacion.tituloDisplay,
@@ -195,9 +227,31 @@ class _ConversacionTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        fecha,
-        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+      subtitle: Row(
+        children: [
+          if (esExaminador) ...[
+            Container(
+              margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'Examinador',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                ),
+              ),
+            ),
+          ],
+          Text(
+            fecha,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -292,6 +346,172 @@ class _ErrorBody extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── 1.4 + 1.6 Selector de documento y modo ────────────────────────────────────
+
+/// Bottom sheet para elegir documento y modo antes de crear una conversación.
+/// Devuelve (documentoId, modo) como Dart record, o null si el usuario cancela.
+class _DocumentoSelectorSheet extends StatefulWidget {
+  const _DocumentoSelectorSheet({required this.documentos});
+
+  final List<Documento> documentos;
+
+  @override
+  State<_DocumentoSelectorSheet> createState() =>
+      _DocumentoSelectorSheetState();
+}
+
+class _DocumentoSelectorSheetState extends State<_DocumentoSelectorSheet> {
+  String _modo = 'GENERAL';
+  int? _documentoId;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Text(
+              'Nueva conversación',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+
+          // ── Selector de modo ──────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Text(
+              'Modo',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary,
+                    letterSpacing: 0.8,
+                  ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(
+                  value: 'GENERAL',
+                  icon: Icon(Icons.chat_outlined, size: 18),
+                  label: Text('General'),
+                ),
+                ButtonSegment(
+                  value: 'EXAMINADOR',
+                  icon: Icon(Icons.school_outlined, size: 18),
+                  label: Text('Examinador'),
+                ),
+              ],
+              selected: {_modo},
+              onSelectionChanged: (s) => setState(() => _modo = s.first),
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+            child: Text(
+              _modo == 'EXAMINADOR'
+                  ? 'Practica como si fuera el examen; la IA pregunta y corrige.'
+                  : 'Pregunta lo que quieras sobre tu oposición.',
+              style:
+                  TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // ── Selector de documento ─────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+            child: Text(
+              'Documento (opcional)',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary,
+                    letterSpacing: 0.8,
+                  ),
+            ),
+          ),
+          // Opción sin documento
+          RadioListTile<int?>(
+            value: null,
+            groupValue: _documentoId,
+            onChanged: (v) => setState(() => _documentoId = v),
+            title: const Text('Sin documento'),
+            subtitle: Text(
+              'La IA responde usando tu contexto general de oposición.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+            dense: true,
+          ),
+
+          if (widget.documentos.isNotEmpty)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: widget.documentos.length,
+                itemBuilder: (_, i) {
+                  final doc = widget.documentos[i];
+                  return RadioListTile<int?>(
+                    value: doc.textoDisponible ? doc.id : null,
+                    groupValue: _documentoId,
+                    onChanged: doc.textoDisponible
+                        ? (v) => setState(() => _documentoId = v)
+                        : null,
+                    title: Text(
+                      doc.nombre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      doc.textoDisponible
+                          ? 'Texto disponible'
+                          : 'Sin texto extraído',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: doc.textoDisponible
+                            ? Colors.green.shade600
+                            : Colors.grey.shade400,
+                      ),
+                    ),
+                    dense: true,
+                  );
+                },
+              ),
+            ),
+
+          const Divider(height: 1),
+
+          // ── Botón crear ───────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () =>
+                    Navigator.pop(context, (_documentoId, _modo)),
+                icon: const Icon(Icons.add),
+                label: const Text('Crear conversación'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

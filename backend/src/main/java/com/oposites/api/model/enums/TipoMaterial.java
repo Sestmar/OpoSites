@@ -6,5 +6,6 @@ public enum TipoMaterial {
     @JsonProperty("flashcards")      FLASHCARDS,
     @JsonProperty("resumen")         RESUMEN,
     @JsonProperty("conceptos_clave") CONCEPTOS_CLAVE,
-    @JsonProperty("mapa_mental")     MAPA_MENTAL
+    @JsonProperty("mapa_mental")     MAPA_MENTAL,
+    @JsonProperty("test")            TEST
 }

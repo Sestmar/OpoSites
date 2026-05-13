@@ -150,9 +150,11 @@ public class DocumentoService {
                 default -> throw new AppException("Tipo de archivo no soportado", HttpStatus.BAD_REQUEST);
             };
 
-            if (texto == null || texto.isBlank()) {
-                log.warn("Texto vacío extraído de: {}", nombreOriginal);
-                return null;
+            if (texto == null || texto.isBlank() || texto.strip().length() < 50) {
+                throw new AppException(
+                        "El documento parece ser una imagen escaneada o no contiene texto seleccionable. " +
+                        "Solo se admiten documentos PDF con texto extraíble.",
+                        HttpStatus.UNPROCESSABLE_ENTITY);
             }
 
             return texto.length() > MAX_CHARS_TEXTO
@@ -233,6 +235,18 @@ public class DocumentoService {
                     Formato exacto:
                     {"raiz":{"titulo":"...","hijos":[{"titulo":"...","hijos":[{"titulo":"...","hijos":[]}]}]}}
                     Sé conciso en los títulos: máximo 6-8 palabras por nodo. Usa el idioma del documento original.
+                    """;
+            case TEST -> """
+                    Eres un experto en elaboración de test para oposiciones en España.
+                    Crea entre 8 y 10 preguntas de opción múltiple (MCQ) a partir del documento proporcionado.
+                    Cada pregunta debe tener exactamente 4 opciones y una única respuesta correcta.
+                    Responde EXCLUSIVAMENTE con un JSON válido, sin texto adicional ni bloques de código markdown.
+                    Formato exacto:
+                    {"preguntas":[{"enunciado":"...","opciones":["A...","B...","C...","D..."],"respuestaCorrecta":0,"explicacion":"..."}]}
+                    - "respuestaCorrecta" es el índice (0-3) de la opción correcta.
+                    - "explicacion" debe justificar brevemente por qué esa opción es correcta.
+                    - Las preguntas deben cubrir los puntos más relevantes del documento.
+                    - Usa el idioma del documento original.
                     """;
         };
     }

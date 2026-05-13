@@ -15,6 +15,8 @@ ConversacionResumen _$ConversacionResumenFromJson(Map<String, dynamic> json) =>
           .map((e) => e as String)
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      nombreDocumento: json['nombreDocumento'] as String?,
+      modo: json['modo'] as String?,
     );
 
 Map<String, dynamic> _$ConversacionResumenToJson(
@@ -25,4 +27,6 @@ Map<String, dynamic> _$ConversacionResumenToJson(
       'fechaExamen': instance.fechaExamen,
       'temasDebiles': instance.temasDebiles,
       'createdAt': instance.createdAt.toIso8601String(),
+      'nombreDocumento': instance.nombreDocumento,
+      'modo': instance.modo,
     };

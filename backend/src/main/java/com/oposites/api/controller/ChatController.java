@@ -1,5 +1,7 @@
 package com.oposites.api.controller;
 
+import com.oposites.api.model.dto.request.CambiarModoRequest;
+import com.oposites.api.model.dto.request.CrearConversacionRequest;
 import com.oposites.api.model.dto.request.EnviarMensajeRequest;
 import com.oposites.api.model.dto.response.ConversacionResponse;
 import com.oposites.api.model.dto.response.EnviarMensajeResponse;
@@ -32,9 +34,10 @@ public class ChatController {
 
     @PostMapping("/conversaciones")
     public ResponseEntity<ConversacionResponse> crearConversacion(
-            @AuthenticationPrincipal UserDetails user) {
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody(required = false) CrearConversacionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(chatIAService.crearConversacion(user.getUsername()));
+                .body(chatIAService.crearConversacion(user.getUsername(), request));
     }
 
     @GetMapping("/conversaciones/{id}/mensajes")
@@ -50,6 +53,14 @@ public class ChatController {
             @PathVariable Long id,
             @Valid @RequestBody EnviarMensajeRequest request) {
         return ResponseEntity.ok(chatIAService.enviarMensaje(id, user.getUsername(), request));
+    }
+
+    @PatchMapping("/conversaciones/{id}/modo")
+    public ResponseEntity<ConversacionResponse> cambiarModo(
+            @AuthenticationPrincipal UserDetails user,
+            @PathVariable Long id,
+            @Valid @RequestBody CambiarModoRequest request) {
+        return ResponseEntity.ok(chatIAService.cambiarModo(id, user.getUsername(), request.getModo()));
     }
 
     @DeleteMapping("/conversaciones/{id}")

@@ -63,6 +63,41 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  // ── Cambio de modo ─────────────────────────────────────────────────────────
+
+  Future<void> _confirmarCambioModo(ChatState s) async {
+    final esExaminador = s.conversacion.esExaminador;
+    final nuevoModo = esExaminador ? 'GENERAL' : 'EXAMINADOR';
+
+    if (s.conversacion.mensajes.isNotEmpty) {
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Cambiar modo'),
+          content: const Text(
+            'Cambiar de modo puede alterar el comportamiento de la IA en esta conversación. ¿Querés continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Cambiar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmar != true) return;
+    }
+
+    if (!mounted) return;
+    ref
+        .read(chatNotifierProvider(widget.conversacionId).notifier)
+        .cambiarModo(nuevoModo);
+  }
+
   // ── Envío ──────────────────────────────────────────────────────────────────
 
   Future<void> _enviar() async {
@@ -159,7 +194,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ),
       ),
-      data: (s) => Scaffold(
+      data: (s) {
+        final esExaminador = s.conversacion.esExaminador;
+        return Scaffold(
         appBar: AppBar(
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,13 +212,58 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
             ],
           ),
+          actions: [
+            // 1.6 — Toggle modo examinador
+            Tooltip(
+              message: esExaminador ? 'Cambiar a modo General' : 'Activar modo Examinador',
+              child: IconButton(
+                icon: Icon(
+                  esExaminador ? Icons.school : Icons.school_outlined,
+                  color: esExaminador
+                      ? Theme.of(context).colorScheme.tertiary
+                      : null,
+                ),
+                onPressed: s.iaEscribiendo
+                    ? null
+                    : () => _confirmarCambioModo(s),
+              ),
+            ),
+          ],
         ),
         body: Column(
           children: [
+            // 1.6 — Banner modo examinador
+            if (esExaminador)
+              Container(
+                width: double.infinity,
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.school,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onTertiaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Modo Examinador activo — la IA te hará preguntas tipo test',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onTertiaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // ── Historial de mensajes ──────────────────────────────────────
             Expanded(
               child: s.conversacion.mensajes.isEmpty && !s.iaEscribiendo
-                  ? const _EmptyChat()
+                  ? _EmptyChat(esExaminador: esExaminador)
                   : ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(
@@ -205,10 +287,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               controller: _textController,
               disabled: s.iaEscribiendo,
               onEnviar: _enviar,
+              esExaminador: esExaminador,
             ),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -312,7 +396,9 @@ class _IaEscribiendoIndicator extends StatelessWidget {
 // ── Estado vacío ───────────────────────────────────────────────────────────────
 
 class _EmptyChat extends StatelessWidget {
-  const _EmptyChat();
+  const _EmptyChat({this.esExaminador = false});
+
+  final bool esExaminador;
 
   @override
   Widget build(BuildContext context) {
@@ -322,11 +408,16 @@ class _EmptyChat extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.smart_toy_outlined,
-                size: 56, color: Colors.grey.shade300),
+            Icon(
+              esExaminador ? Icons.school_outlined : Icons.smart_toy_outlined,
+              size: 56,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
-              'Empezá preguntando algo\nsobre tu oposición',
+              esExaminador
+                  ? 'La IA va a hacerte preguntas\ntipo test. ¡Respondé cuando estés listo!'
+                  : 'Empezá preguntando algo\nsobre tu oposición',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey.shade500,
@@ -347,11 +438,13 @@ class _InputBar extends StatelessWidget {
     required this.controller,
     required this.disabled,
     required this.onEnviar,
+    this.esExaminador = false,
   });
 
   final TextEditingController controller;
   final bool disabled;
   final VoidCallback onEnviar;
+  final bool esExaminador;
 
   @override
   Widget build(BuildContext context) {
@@ -377,7 +470,9 @@ class _InputBar extends StatelessWidget {
                 minLines: 1,
                 textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
-                  hintText: 'Escribe tu consulta…',
+                  hintText: esExaminador
+                      ? 'Escribe tu respuesta (A, B, C o D)…'
+                      : 'Escribe tu consulta…',
                   filled: true,
                   fillColor:
                       Theme.of(context).colorScheme.surfaceContainerHighest,

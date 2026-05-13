@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import 'material_generado.dart';
+
 // ── Modelos de dominio ─────────────────────────────────────────────────────────
 
 class DocumentoTestPregunta {
@@ -55,6 +57,33 @@ class DocumentoTest {
             .toList(),
         creadoEn: DateTime.parse(json['creadoEn'] as String),
       );
+
+  /// Crea un DocumentoTest a partir de un MaterialGenerado de tipo TEST.
+  /// Permite reutilizar DocumentoTestScreen sin cambiarla.
+  factory DocumentoTest.fromMaterial(MaterialGenerado m) {
+    final rawPreguntas =
+        (m.contenido['preguntas'] as List<dynamic>? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .toList();
+    final preguntas = rawPreguntas.asMap().entries.map((e) {
+      final p = e.value;
+      return DocumentoTestPregunta(
+        id: e.key,
+        enunciado: p['enunciado'] as String? ?? '',
+        opciones: (p['opciones'] as List<dynamic>? ?? []).cast<String>(),
+        respuestaCorrecta: p['respuestaCorrecta'] as int? ?? 0,
+        explicacion: p['explicacion'] as String? ?? '',
+        orden: e.key,
+      );
+    }).toList();
+
+    return DocumentoTest(
+      id: m.id,
+      documentoId: m.documentoId,
+      preguntas: preguntas,
+      creadoEn: m.creadoEn,
+    );
+  }
 }
 
 /// Resultado de una sesión de test: las preguntas + lo que eligió el usuario.

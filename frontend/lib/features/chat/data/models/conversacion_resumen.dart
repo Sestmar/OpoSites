@@ -12,6 +12,8 @@ class ConversacionResumen {
     this.fechaExamen,
     required this.temasDebiles,
     required this.createdAt,
+    this.nombreDocumento,
+    this.modo,
   });
 
   final int id;
@@ -19,6 +21,9 @@ class ConversacionResumen {
   final String? fechaExamen;
   final List<String> temasDebiles;
   final DateTime createdAt;
+  final String? nombreDocumento;
+  /// 'GENERAL' o 'EXAMINADOR' — null si la conversación es antigua
+  final String? modo;
 
   factory ConversacionResumen.fromJson(Map<String, dynamic> json) =>
       _$ConversacionResumenFromJson(json);
@@ -26,6 +31,9 @@ class ConversacionResumen {
   Map<String, dynamic> toJson() => _$ConversacionResumenToJson(this);
 
   /// Genera un título legible para mostrar en la lista.
-  String get tituloDisplay =>
-      nombreRama != null ? 'Chat — $nombreRama' : 'Nueva conversación';
+  String get tituloDisplay {
+    if (nombreDocumento != null) return 'Chat — $nombreDocumento';
+    if (nombreRama != null) return 'Chat — $nombreRama';
+    return 'Nueva conversación';
+  }
 }

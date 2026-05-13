@@ -48,6 +48,8 @@ class _ProgresoScreenState extends ConsumerState<ProgresoScreen> {
               SizedBox(height: 10),
               _FallosRow(),
               SizedBox(height: 12),
+              _RepasoCard(),
+              SizedBox(height: 12),
               _AiSection(),
               SizedBox(height: 20),
               _TemasSection(),
@@ -621,4 +623,68 @@ class _GradientRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GradientRingPainter old) => old.value != value;
+}
+
+// ── 5.2 Repaso personalizado ───────────────────────────────────────────────────
+
+class _RepasoCard extends StatelessWidget {
+  const _RepasoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.repasoActivo),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: colorScheme.tertiaryContainer.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colorScheme.tertiary.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colorScheme.tertiary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.refresh_outlined,
+                  color: colorScheme.tertiary, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Repasar mis fallos',
+                    style: AppText.label.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '10 preguntas sobre tus temas más débiles',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onTertiaryContainer.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 14, color: colorScheme.tertiary),
+          ],
+        ),
+      ),
+    );
+  }
 }

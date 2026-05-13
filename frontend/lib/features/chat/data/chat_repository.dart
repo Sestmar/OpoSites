@@ -40,13 +40,18 @@ class ChatRepository {
     }
   }
 
-  /// Crea una nueva conversación vacía y devuelve su resumen.
-  ///
-  /// El backend inicializa el contexto con la rama y temas débiles del usuario.
-  Future<ConversacionResumen> crearConversacion() async {
+  /// Crea una nueva conversación. [documentoId] ancla al documento, [modo] define el modo inicial.
+  Future<ConversacionResumen> crearConversacion({int? documentoId, String? modo}) async {
     try {
+      final Map<String, dynamic>? body = (documentoId != null || modo != null)
+          ? {
+              if (documentoId != null) 'documentoId': documentoId,
+              if (modo != null) 'modo': modo,
+            }
+          : null;
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.conversaciones,
+        data: body,
       );
       return ConversacionResumen.fromJson(response.data!);
     } on DioException catch (e) {
@@ -94,6 +99,24 @@ class ChatRepository {
         mensaje: data['mensaje'] as String,
         createdAt: DateTime.parse(data['createdAt'] as String),
       );
+    } on DioException catch (e) {
+      throw _toApiException(e);
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
+  /// Cambia el modo de una conversación ('GENERAL' o 'EXAMINADOR').
+  Future<ConversacionResumen> cambiarModo({
+    required int conversacionId,
+    required String modo,
+  }) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        ApiEndpoints.conversacionModo(conversacionId),
+        data: {'modo': modo},
+      );
+      return ConversacionResumen.fromJson(response.data!);
     } on DioException catch (e) {
       throw _toApiException(e);
     } catch (e) {

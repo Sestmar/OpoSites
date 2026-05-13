@@ -1,5 +1,6 @@
 package com.oposites.api.model.dto.response;
 
+import com.oposites.api.model.enums.ChatModo;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,4 +16,6 @@ public class ConversacionResponse {
     private String fechaExamen;
     private List<String> temasDebiles;
     private LocalDateTime createdAt;
+    private String nombreDocumento;
+    private ChatModo modo;
 }

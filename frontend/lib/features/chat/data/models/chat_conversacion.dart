@@ -14,6 +14,8 @@ class ChatConversacion {
     required this.temasDebiles,
     required this.createdAt,
     required this.mensajes,
+    this.nombreDocumento,
+    this.modo,
   });
 
   final int id;
@@ -22,6 +24,11 @@ class ChatConversacion {
   final List<String> temasDebiles;
   final DateTime createdAt;
   final List<ChatMensaje> mensajes;
+  final String? nombreDocumento;
+  /// 'GENERAL' o 'EXAMINADOR'
+  final String? modo;
+
+  bool get esExaminador => modo == 'EXAMINADOR';
 
   factory ChatConversacion.fromResumen(
     ConversacionResumen resumen,
@@ -34,17 +41,24 @@ class ChatConversacion {
         temasDebiles: resumen.temasDebiles,
         createdAt: resumen.createdAt,
         mensajes: mensajes,
+        nombreDocumento: resumen.nombreDocumento,
+        modo: resumen.modo,
       );
 
-  ChatConversacion copyWith({List<ChatMensaje>? mensajes}) => ChatConversacion(
+  ChatConversacion copyWith({List<ChatMensaje>? mensajes, String? modo}) => ChatConversacion(
         id: id,
         nombreRama: nombreRama,
         fechaExamen: fechaExamen,
         temasDebiles: temasDebiles,
         createdAt: createdAt,
         mensajes: mensajes ?? this.mensajes,
+        nombreDocumento: nombreDocumento,
+        modo: modo ?? this.modo,
       );
 
-  String get tituloDisplay =>
-      nombreRama != null ? 'Chat — $nombreRama' : 'Nueva conversación';
+  String get tituloDisplay {
+    if (nombreDocumento != null) return 'Chat — $nombreDocumento';
+    if (nombreRama != null) return 'Chat — $nombreRama';
+    return 'Nueva conversación';
+  }
 }

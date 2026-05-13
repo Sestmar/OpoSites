@@ -38,6 +38,7 @@ import '../../features/documentos/ui/documento_test_screen.dart';
 import '../../features/documentos/ui/mapa_mental_screen.dart';
 import '../../features/documentos/ui/resumen_screen.dart';
 import '../../features/admin/ui/admin_screen.dart';
+import '../../features/repaso/ui/repaso_active_screen.dart';
 import '../../features/tests/ui/test_active_screen.dart';
 import '../../features/tests/ui/test_config_screen.dart';
 import '../../features/tests/ui/test_fallos_screen.dart';
@@ -92,6 +93,10 @@ abstract final class AppRoutes {
 
   // ── Admin ──────────────────────────────────────────────────────────────────
   static const admin = '/admin';
+
+  // ── Repaso personalizado (fuera del shell — flujo inmersivo) ─────────────
+  static const repasoActivo   = '/repaso/activo';
+  static String repasoResultado(int id) => '/repaso/$id/resultado';
 
   // ── Documentos sub-rutas ───────────────────────────────────────────────────
   static const documentos = '/documentos';
@@ -201,6 +206,19 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: AppRoutes.simulacroResultado,
         builder: (_, __) => const SimulacroResultScreen(),
+      ),
+
+      // ── Repaso — flujo inmersivo (fuera del shell) ────────────────────────
+      GoRoute(
+        path: AppRoutes.repasoActivo,
+        builder: (_, __) => const RepasoActiveScreen(),
+      ),
+      GoRoute(
+        path: '/repaso/:id/resultado',
+        builder: (_, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return RepasoResultadoScreen(sesionId: id);
+        },
       ),
 
       // ── Shell con 4 tabs ─────────────────────────────────────────────────

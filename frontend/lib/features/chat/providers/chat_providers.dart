@@ -95,12 +95,12 @@ class ConversacionesListNotifier extends _$ConversacionesListNotifier {
   /// Alias semántico de [cargar] — para el botón de refresh.
   Future<void> refrescar() => cargar();
 
-  /// Crea una nueva conversación vacía, la añade al inicio de la lista
-  /// y devuelve el [id] para que la UI pueda navegar a ella.
-  ///
+  /// Crea una nueva conversación. [documentoId] la ancla al documento; [modo] define el modo inicial.
   /// Lanza [ApiException] si falla — la UI captura para SnackBar.
-  Future<int> crear() async {
-    final resumen = await ref.read(chatRepositoryProvider).crearConversacion();
+  Future<int> crear({int? documentoId, String? modo}) async {
+    final resumen = await ref
+        .read(chatRepositoryProvider)
+        .crearConversacion(documentoId: documentoId, modo: modo);
     final current = state.valueOrNull ?? [];
     state = AsyncData([resumen, ...current]);
     return resumen.id;
@@ -246,5 +246,27 @@ class ChatNotifier extends _$ChatNotifier {
     final current = state.valueOrNull;
     if (current == null) return;
     state = AsyncData(current.copyWith(clearError: true));
+  }
+
+  /// Cambia el modo de la conversación ('GENERAL' o 'EXAMINADOR').
+  /// Actualiza el estado local inmediatamente para que la UI reaccione.
+  Future<void> cambiarModo(String modo) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    // Actualización optimista local
+    state = AsyncData(current.copyWith(
+      conversacion: current.conversacion.copyWith(modo: modo),
+    ));
+
+    try {
+      await ref.read(chatRepositoryProvider).cambiarModo(
+            conversacionId: conversacionId,
+            modo: modo,
+          );
+    } catch (_) {
+      // Revertir si falla
+      state = AsyncData(current);
+    }
   }
 }

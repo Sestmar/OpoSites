@@ -10,7 +10,7 @@ abstract final class ApiEndpoints {
   // 10.0.2.2 = localhost del host para emulador Android.
   // Para web/Windows desktop usar 'http://localhost:8080/api/v1'.
   // ── Entorno activo — comentar/descomentar según necesitás ───────────────────
-  static const String baseUrl = 'http://192.168.1.133:8080/api/v1'; // LOCAL
+  static const String baseUrl = 'http://localhost:8080/api/v1'; // LOCAL
   // static const String baseUrl = 'https://oposites.onrender.com/api/v1'; // PROD
 
   // ── 1. Auth ──────────────────────────────────────────────────────────────
@@ -81,6 +81,7 @@ abstract final class ApiEndpoints {
   static const String conversaciones = '/chat/conversaciones';
   static String conversacionDetalle(int id)  => '/chat/conversaciones/$id';
   static String conversacionMensajes(int id) => '/chat/conversaciones/$id/mensajes';
+  static String conversacionModo(int id)     => '/chat/conversaciones/$id/modo';
 
   // ── 13. Documentos ────────────────────────────────────────────────────────
   static const String documentos       = '/documentos';
@@ -99,7 +100,12 @@ abstract final class ApiEndpoints {
   static String preguntaMarcar(int id)            => '/preguntas/$id/marcar';
   static const String preguntasMarcadasConteo     = '/preguntas/marcadas/conteo';
 
-  // ── 16. Admin — Noticias ──────────────────────────────────────────────────
+  // ── 16. Repaso personalizado ─────────────────────────────────────────────
+  static const String repasoSesiones              = '/repaso/sesiones';
+  static String repasoSesionRespuestas(int id)    => '/repaso/sesiones/$id/respuestas';
+  static String repasoSesionResultado(int id)     => '/repaso/sesiones/$id/resultado';
+
+  // ── 17. Admin — Noticias ──────────────────────────────────────────────────
   static const String adminNoticiasBorradores = '/admin/noticias/borradores';
   static const String adminNoticiasIngesta    = '/admin/noticias/ingesta/ejecutar';
   static String adminNoticiaEstado(int id)    => '/admin/noticias/$id/estado';

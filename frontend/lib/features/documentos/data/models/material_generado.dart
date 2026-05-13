@@ -1,10 +1,11 @@
-enum TipoMaterial { flashcards, resumen, conceptosClave, mapaMental }
+enum TipoMaterial { flashcards, resumen, conceptosClave, mapaMental, test }
 
 TipoMaterial _parseTipoMaterial(String s) => switch (s) {
       'flashcards' => TipoMaterial.flashcards,
       'resumen' => TipoMaterial.resumen,
       'conceptos_clave' => TipoMaterial.conceptosClave,
       'mapa_mental' => TipoMaterial.mapaMental,
+      'test' => TipoMaterial.test,
       _ => TipoMaterial.resumen,
     };
 
@@ -13,6 +14,7 @@ String tipoMaterialToJson(TipoMaterial tipo) => switch (tipo) {
       TipoMaterial.resumen => 'resumen',
       TipoMaterial.conceptosClave => 'conceptos_clave',
       TipoMaterial.mapaMental => 'mapa_mental',
+      TipoMaterial.test => 'test',
     };
 
 String tipoMaterialLabel(TipoMaterial tipo) => switch (tipo) {
@@ -20,6 +22,7 @@ String tipoMaterialLabel(TipoMaterial tipo) => switch (tipo) {
       TipoMaterial.resumen => 'Resumen',
       TipoMaterial.conceptosClave => 'Conceptos clave',
       TipoMaterial.mapaMental => 'Mapa mental',
+      TipoMaterial.test => 'Test de práctica',
     };
 
 // ── Tipos de contenido ────────────────────────────────────────────────────────

@@ -22,9 +22,15 @@ public class ProgresoUsuario {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "pregunta_id", nullable = false)
+    // nullable: las respuestas de sesiones de repaso IA no tienen pregunta real
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "pregunta_id", nullable = true)
     private Pregunta pregunta;
+
+    // 5.2 — Tema directo cuando no hay pregunta (repaso IA)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "tema_id", nullable = true)
+    private Tema tema;
 
     // nullable: puede haber respuestas fuera de una sesión (futuro)
     @ManyToOne(fetch = FetchType.LAZY)
