@@ -10,8 +10,8 @@ abstract final class ApiEndpoints {
   // 10.0.2.2 = localhost del host para emulador Android.
   // Para web/Windows desktop usar 'http://localhost:8080/api/v1'.
   // ── Entorno activo — comentar/descomentar según necesitás ───────────────────
-  static const String baseUrl = 'http://localhost:8080/api/v1'; // LOCAL
-  // static const String baseUrl = 'https://oposites.onrender.com/api/v1'; // PROD
+  // static const String baseUrl = 'http://localhost:8080/api/v1'; // LOCAL
+  static const String baseUrl = 'https://oposites.onrender.com/api/v1'; // PROD
 
   // ── 1. Auth ──────────────────────────────────────────────────────────────
   static const String register    = '/auth/register';

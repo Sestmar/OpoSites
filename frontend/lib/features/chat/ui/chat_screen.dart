@@ -282,6 +282,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
             ),
 
+            // ── Disclaimer IA ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                'La IA puede cometer errores. Verificá siempre con fuentes oficiales.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                ),
+              ),
+            ),
+
             // ── Input ──────────────────────────────────────────────────────
             _InputBar(
               controller: _textController,
