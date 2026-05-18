@@ -30,6 +30,9 @@ spring:
     locations: classpath:db/migration
     # baseline-on-migrate: false => error si la BD ya tiene tablas sin baseline de Flyway
     baseline-on-migrate: false
+    # out-of-order: permite aplicar migraciones con número menor a las ya ejecutadas.
+    # Necesario porque V20-V24 (seeds de contenido) se subieron después de V25-V29.
+    out-of-order: true
 
   security:
     oauth2:
