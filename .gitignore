@@ -38,4 +38,4 @@ yarn-error.log*
 docs/
 
 # Omitir archivos con extension .md
-*.md
+*.mdbackend/target/
