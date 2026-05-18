@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "473420233111-gpie8keka4jkfvophjne79cm1i4pd61m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.oposites.app",
+            "certificate_hash": "49756c3cef3516722130dc1db625e6801c9e9882"
+          }
+        },
+        {
           "client_id": "473420233111-n2qrt7l44520pbbflnmn214q0993f73e.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
