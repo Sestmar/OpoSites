@@ -115,7 +115,7 @@ class _TemarioScreenState extends ConsumerState<TemarioScreen> {
       body: ramaId == null
           ? Center(
               child: Text(
-                'Seleccioná tu oposición primero.',
+                'Selecciona tu oposición primero.',
                 style: AppText.body.copyWith(color: AppColors.textMutedFor(b)),
               ),
             )

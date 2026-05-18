@@ -205,6 +205,13 @@ class _SimulacroActiveScreenState
                     ...question.opciones.map(
                       (opcion) => _OptionTile(
                         opcion: opcion,
+                        label: question.tipo == QuestionType.trueFalse
+                            ? switch (opcion) {
+                                'X' => 'Incorrecto (X)',
+                                '-' => 'Correcto (-)',
+                                _ => opcion,
+                              }
+                            : opcion,
                         isSelected: selectedOption == opcion,
                         isSubmitting: isSubmitting,
                         onTap: () => ref
@@ -289,8 +296,10 @@ class _OptionTile extends StatelessWidget {
     required this.isSelected,
     required this.isSubmitting,
     required this.onTap,
+    this.label,
   });
   final String opcion;
+  final String? label;
   final bool isSelected;
   final bool isSubmitting;
   final VoidCallback onTap;
@@ -315,7 +324,7 @@ class _OptionTile extends StatelessWidget {
                     isSelected ? Theme.of(context).colorScheme.primary : null,
               ),
               const SizedBox(width: 12),
-              Expanded(child: Text(opcion)),
+              Expanded(child: Text(label ?? opcion)),
             ],
           ),
         ),

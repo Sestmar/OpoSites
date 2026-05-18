@@ -288,6 +288,17 @@ class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  String _labelOpcion(String opcion, QuestionType tipo) {
+    if (tipo == QuestionType.trueFalse) {
+      return switch (opcion) {
+        'X' => 'Incorrecto (X)',
+        '-' => 'Correcto (-)',
+        _ => opcion,
+      };
+    }
+    return opcion;
+  }
+
   Widget _buildOptionTile(
     BuildContext context,
     WidgetRef ref,
@@ -322,7 +333,7 @@ class _TestActiveScreenState extends ConsumerState<TestActiveScreen> {
                     : null,
               ),
               const SizedBox(width: 12),
-              Expanded(child: Text(opcion)),
+              Expanded(child: Text(_labelOpcion(opcion, question.tipo))),
             ],
           ),
         ),

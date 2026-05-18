@@ -62,6 +62,17 @@ app:
   uploads:
     path: ${UPLOADS_PATH:./uploads}
 
+  # ── Proveedores IA de fallback ─────────────────────────────────────────────
+  # Si la variable de entorno está vacía o ausente, el proveedor no se activa.
+  # Orden de fallback: Groq (principal) → Cerebras → Gemini Flash
+  ai:
+    cerebras:
+      api-key: ${CEREBRAS_API_KEY:}
+      model: llama-3.3-70b
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: gemini-2.0-flash
+
   rate-limit:
     auth:
       # Límites LAXOS para desarrollo local — no interferir en pruebas.

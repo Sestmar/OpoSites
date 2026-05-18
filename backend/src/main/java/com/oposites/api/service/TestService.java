@@ -109,6 +109,16 @@ public class TestService {
     @Transactional
     public ResultadoTestResponse completarSesion(TestSession session, List<RespuestaDto> respuestas) {
         Set<Long> preguntasEnSession = new HashSet<>(session.getPreguntaIds());
+        Map<Long, Pregunta> preguntasMap = preguntaRepository.findAllById(session.getPreguntaIds())
+                .stream()
+                .collect(HashMap::new, (m, p) -> m.put(p.getId(), p), HashMap::putAll);
+
+        int totalEvaluables = (int) session.getPreguntaIds().stream()
+                .map(preguntasMap::get)
+                .filter(Objects::nonNull)
+                .filter(p -> !p.isAnulada())
+                .count();
+
         List<ResultadoPreguntaDto> detalle = new ArrayList<>();
         int correctas = 0;
 
@@ -116,8 +126,19 @@ public class TestService {
             // Ignorar preguntas que no pertenecen a esta sesión
             if (!preguntasEnSession.contains(r.getPreguntaId())) continue;
 
-            Pregunta pregunta = preguntaRepository.findById(r.getPreguntaId())
+            Pregunta pregunta = Optional.ofNullable(preguntasMap.get(r.getPreguntaId()))
                     .orElseThrow(() -> new AppException("Pregunta no encontrada: " + r.getPreguntaId(), HttpStatus.NOT_FOUND));
+
+            if (pregunta.isAnulada()) {
+                detalle.add(ResultadoPreguntaDto.builder()
+                        .preguntaId(pregunta.getId())
+                        .correcto(true)
+                        .respuestaUsuario(r.getRespuestaUsuario())
+                        .respuestaCorrecta("ANULADA")
+                        .explicacion(pregunta.getExplicacion())
+                        .build());
+                continue;
+            }
 
             boolean correcto = esCorrecta(pregunta, r.getRespuestaUsuario());
             if (correcto) correctas++;
@@ -140,7 +161,9 @@ public class TestService {
                     .build());
         }
 
-        double nota = calcularNota(correctas, session.getTotalPreguntas());
+        session.setTotalPreguntas(totalEvaluables);
+
+        double nota = calcularNota(correctas, totalEvaluables);
         session.setCorrectas(correctas);
         session.setNota(nota);
         session.setEstado(EstadoSession.COMPLETADO);

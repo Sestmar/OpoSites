@@ -457,7 +457,7 @@ class _RepasarMarcadasCard extends ConsumerWidget {
                         ),
                         Text(
                           selectedRamaId == null
-                              ? 'Seleccioná una oposición para repasar'
+                              ? 'Selecciona una oposición para repasar'
                               : 'Repasar preguntas de esta oposición',
                           style: AppText.caption
                               .copyWith(color: AppColors.textMutedFor(b)),

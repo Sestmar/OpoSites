@@ -31,7 +31,6 @@ import com.oposites.api.repository.TemaRepository;
 import com.oposites.api.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -73,7 +72,7 @@ public class ChatIAService {
     // 1.4 — Límite de caracteres del texto extraído cuando no hay RESUMEN disponible (~750 tokens)
     private static final int MAX_CHARS_CONTEXTO_DOC = 3_000;
 
-    private final ChatClient chatClient;
+    private final AiProviderChain aiProviderChain;
     private final ChatConversacionRepository conversacionRepository;
     private final ChatMensajeRepository mensajeRepository;
     private final UsuarioRepository usuarioRepository;
@@ -173,13 +172,10 @@ public class ChatIAService {
                     : new UserMessage(m.getMensaje()));
         }
 
-        // 4. Llama al LLM (gemini-2.0-flash vía endpoint OpenAI-compatible)
+        // 4. Llama al LLM con fallback automático (Groq → Cerebras → Gemini)
         String respuestaTexto;
         try {
-            respuestaTexto = chatClient.prompt()
-                    .messages(llmMessages)
-                    .call()
-                    .content();
+            respuestaTexto = aiProviderChain.call(llmMessages);
         } catch (Exception e) {
             if (esErrorRateLimit(e)) {
                 throw new AppException(

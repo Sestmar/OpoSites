@@ -35,6 +35,7 @@ public class SecurityConfig {
                         // Endpoints públicos (sin token)
                         .requestMatchers(
                                 "/api/v1/auth/**",
+                                "/api/v1/ping",
                                 "/actuator/health",
                                 "/login/oauth2/**",
                                 "/oauth2/**",

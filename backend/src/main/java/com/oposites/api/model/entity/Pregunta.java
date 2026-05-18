@@ -48,6 +48,9 @@ public class Pregunta {
     @Column(nullable = false)
     private int dificultad;
 
+    @Column(nullable = false)
+    private boolean anulada;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

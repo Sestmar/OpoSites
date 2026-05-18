@@ -1,0 +1,107 @@
+-- V21: Ajuste de rama sanitaria a oposicion concreta TCAE (estatutario)
+-- Reemplaza el contenido sanitario generico por temario base especifico de TCAE.
+
+-- 1) Renombrar rama para explicitar el alcance
+UPDATE ramas_oposiciones
+SET nombre = 'TCAE del Servicio de Salud (Estatutario)'
+WHERE nombre = 'Técnico Auxiliar Sanitario';
+
+-- 2) Limpiar temas y preguntas previas de la rama sanitaria (nombre antiguo o nuevo)
+DELETE FROM preguntas p
+USING temas t, ramas_oposiciones r
+WHERE p.tema_id = t.id
+  AND t.rama_id = r.id
+  AND r.nombre IN ('Técnico Auxiliar Sanitario', 'TCAE del Servicio de Salud (Estatutario)');
+
+DELETE FROM temas t
+USING ramas_oposiciones r
+WHERE t.rama_id = r.id
+  AND r.nombre IN ('Técnico Auxiliar Sanitario', 'TCAE del Servicio de Salud (Estatutario)');
+
+-- 3) Insertar temario base especifico de TCAE
+INSERT INTO temas (rama_id, nombre, orden, descripcion_corta, preguntas_count)
+SELECT r.id, v.nombre, v.orden, v.descripcion, 10
+FROM ramas_oposiciones r
+JOIN (
+    VALUES
+        ('Marco normativo del sistema sanitario', 1, 'Constitucion sanitaria, SNS y normativa estatutaria basica'),
+        ('Documentacion clinica y derechos del paciente', 2, 'Historia clinica, consentimiento informado y confidencialidad'),
+        ('Tecnicas basicas de cuidados auxiliares', 3, 'Higiene, movilizacion, alimentacion y apoyo en actividades basicas'),
+        ('Seguridad del paciente y prevencion de riesgos', 4, 'Infecciones, bioseguridad, ergonomia y notificacion de incidentes'),
+        ('TCAE en hospitalizacion y atencion primaria', 5, 'Funciones operativas, coordinacion y continuidad asistencial')
+) AS v(nombre, orden, descripcion) ON 1=1
+WHERE r.nombre = 'TCAE del Servicio de Salud (Estatutario)';
+
+UPDATE ramas_oposiciones
+SET temas_count = 5
+WHERE nombre = 'TCAE del Servicio de Salud (Estatutario)';
+
+-- 4) Insertar preguntas base (50 MCQ, 10 por tema)
+WITH preguntas_tcae (tema_nombre, enunciado, opciones, respuesta_correcta, explicacion, dificultad) AS (
+    VALUES
+        -- Tema 1: Marco normativo del sistema sanitario
+        ('Marco normativo del sistema sanitario', 'El derecho a la proteccion de la salud se reconoce en la Constitucion Espanola en el articulo:', '["41","42","43","44"]', '43', 'El articulo 43 CE reconoce el derecho a la proteccion de la salud y la competencia publica para organizarla.', 1),
+        ('Marco normativo del sistema sanitario', 'La Ley General de Sanidad es la:', '["Ley 14/1986","Ley 16/2003","Ley 41/2002","Ley 44/2003"]', 'Ley 14/1986', 'La Ley 14/1986 establece las bases generales del sistema sanitario espanol.', 1),
+        ('Marco normativo del sistema sanitario', 'La Ley de cohesion y calidad del Sistema Nacional de Salud es la:', '["Ley 14/1986","Ley 16/2003","Ley 55/2003","Ley 39/2015"]', 'Ley 16/2003', 'La Ley 16/2003 refuerza cohesion, cartera comun y coordinacion del SNS.', 2),
+        ('Marco normativo del sistema sanitario', 'El Estatuto Marco del personal estatutario de los servicios de salud se regula en:', '["Ley 55/2003","Ley 41/2002","Ley 31/1995","Ley 14/1986"]', 'Ley 55/2003', 'La Ley 55/2003 regula el regimen juridico basico del personal estatutario sanitario.', 2),
+        ('Marco normativo del sistema sanitario', 'La ordenacion de profesiones sanitarias se regula en:', '["Ley 44/2003","Ley 16/2003","Ley 40/2015","LO 3/2018"]', 'Ley 44/2003', 'La Ley 44/2003 ordena profesiones sanitarias y principios de desarrollo profesional.', 2),
+        ('Marco normativo del sistema sanitario', 'La atencion sanitaria publica en Espana se organiza principalmente bajo el principio de:', '["Universalidad y equidad","Privatizacion obligatoria","Segmentacion por renta","Cobertura selectiva discrecional"]', 'Universalidad y equidad', 'El modelo del SNS se apoya en cobertura amplia, equidad y acceso segun necesidad sanitaria.', 2),
+        ('Marco normativo del sistema sanitario', 'En el ambito asistencial, la competencia de gestion ordinaria de servicios corresponde normalmente a:', '["Servicios de salud autonómicos","Tribunal Constitucional","Cortes Generales","Consejo General del Poder Judicial"]', 'Servicios de salud autonómicos', 'La gestion sanitaria ordinaria esta descentralizada en los servicios de salud de las CCAA.', 2),
+        ('Marco normativo del sistema sanitario', 'La relacion del personal TCAE con la administracion sanitaria publica, en oposicion estatutaria, es de tipo:', '["Laboral comun","Estatutario","Mercantil","Civil"]', 'Estatutario', 'En servicios de salud publicos, el regimen de referencia del personal asistencial fijo es estatutario.', 1),
+        ('Marco normativo del sistema sanitario', 'La cartera comun de servicios del SNS se asocia principalmente a criterios de:', '["Evidencia, calidad y equidad","Publicidad comercial","Interes local puntual","Conveniencia de centro aislado"]', 'Evidencia, calidad y equidad', 'La prestacion sanitaria debe orientarse a evidencia, calidad asistencial y equidad territorial.', 2),
+        ('Marco normativo del sistema sanitario', 'La coordinacion general sanitaria a nivel estatal corresponde al marco competencial de:', '["Ministerio de Sanidad y Consejo Interterritorial","Ayuntamientos exclusivamente","Diputaciones exclusivamente","Tribunales de justicia"]', 'Ministerio de Sanidad y Consejo Interterritorial', 'La coordinacion del SNS se articula institucionalmente con organos estatales y autonomicos.', 2),
+
+        -- Tema 2: Documentacion clinica y derechos del paciente
+        ('Documentacion clinica y derechos del paciente', 'La autonomia del paciente y el consentimiento informado se regulan en:', '["Ley 41/2002","Ley 39/2015","Ley 31/1995","Ley 55/2003"]', 'Ley 41/2002', 'La Ley 41/2002 regula informacion sanitaria, consentimiento y documentacion clinica.', 1),
+        ('Documentacion clinica y derechos del paciente', 'La historia clinica tiene como finalidad principal:', '["Uso administrativo ajeno a la asistencia","Facilitar asistencia adecuada y continuidad de cuidados","Sustituir la comunicacion entre profesionales","Registro estadistico sin utilidad clinica"]', 'Facilitar asistencia adecuada y continuidad de cuidados', 'La historia clinica es un instrumento clave para continuidad y calidad asistencial.', 1),
+        ('Documentacion clinica y derechos del paciente', 'El acceso a datos clinicos por profesionales debe responder a:', '["Curiosidad profesional","Necesidad asistencial legitima","Interes personal","Difusion academica sin base legal"]', 'Necesidad asistencial legitima', 'El acceso a datos sanitarios debe estar justificado por funcion asistencial y minimizacion.', 2),
+        ('Documentacion clinica y derechos del paciente', 'En materia de proteccion de datos personales en Espana, la norma organica de referencia es:', '["LO 3/2018","LO 2/1986","LO 1/1979","LO 3/2007"]', 'LO 3/2018', 'La LO 3/2018 adapta el RGPD al ordenamiento espanol y regula garantias digitales.', 2),
+        ('Documentacion clinica y derechos del paciente', 'El principio de confidencialidad en sanidad implica:', '["Compartir informacion con cualquier familiar","Reservar la informacion al circuito asistencial autorizado","Publicar datos anonimizados sin control","Comentar casos en espacios no profesionales"]', 'Reservar la informacion al circuito asistencial autorizado', 'La informacion sanitaria requiere especial proteccion y acceso restringido.', 2),
+        ('Documentacion clinica y derechos del paciente', 'El consentimiento informado, con caracter general, debe ser:', '["Verbal o escrito segun acto y riesgo, tras informacion comprensible","Siempre escrito en cualquier actuacion","Tacito por ingreso","Sustituido por firma administrativa"]', 'Verbal o escrito segun acto y riesgo, tras informacion comprensible', 'La forma depende del procedimiento, pero siempre requiere informacion suficiente y comprensible.', 2),
+        ('Documentacion clinica y derechos del paciente', 'El paciente tiene derecho a:', '["No recibir informacion sanitaria","Recibir informacion asistencial comprensible","Modificar registros de terceros","Restringir toda anotacion clinica"]', 'Recibir informacion asistencial comprensible', 'La informacion asistencial es un derecho basico del paciente.', 1),
+        ('Documentacion clinica y derechos del paciente', 'La identificacion inequívoca del paciente en registros y muestras busca principalmente:', '["Reducir carga documental","Evitar errores asistenciales","Acelerar altas administrativas","Simplificar facturacion"]', 'Evitar errores asistenciales', 'La correcta identificacion es medida esencial de seguridad del paciente.', 2),
+        ('Documentacion clinica y derechos del paciente', 'El secreto profesional en el ambito sanitario vincula al TCAE:', '["Solo fuera del centro","En todo momento del ejercicio profesional","Solo frente a medios de comunicacion","Solo en turno de noche"]', 'En todo momento del ejercicio profesional', 'La obligacion de confidencialidad acompana al profesional durante toda su actividad.', 1),
+        ('Documentacion clinica y derechos del paciente', 'La trazabilidad de registros de cuidados permite:', '["Eliminar la responsabilidad profesional","Mejorar continuidad asistencial y auditoria clinica","Sustituir protocolos de calidad","Evitar coordinacion entre turnos"]', 'Mejorar continuidad asistencial y auditoria clinica', 'Registrar correctamente facilita seguimiento clinico y mejora de calidad.', 2),
+
+        -- Tema 3: Tecnicas basicas de cuidados auxiliares
+        ('Tecnicas basicas de cuidados auxiliares', 'La higiene de manos en entorno asistencial es una medida clave para:', '["Evitar registros clinicos","Reducir infecciones relacionadas con la asistencia","Sustituir limpieza de superficies","Aumentar tiempos de consulta"]', 'Reducir infecciones relacionadas con la asistencia', 'La higiene de manos es una de las medidas mas efectivas de prevencion de infecciones.', 1),
+        ('Tecnicas basicas de cuidados auxiliares', 'En movilizacion de pacientes, la prioridad preventiva para el TCAE es:', '["Velocidad sobre tecnica","Aplicar ergonomia y ayudas tecnicas","Mover sin apoyo para reducir tiempos","Evitar colaboracion del paciente"]', 'Aplicar ergonomia y ayudas tecnicas', 'La movilizacion segura protege al paciente y previene lesiones del profesional.', 2),
+        ('Tecnicas basicas de cuidados auxiliares', 'La observacion de cambios en estado general del paciente debe:', '["Posponerse al fin de turno","Comunicarse de forma inmediata segun protocolo","Anotarse solo si son graves","Esperar confirmacion de familiares"]', 'Comunicarse de forma inmediata segun protocolo', 'La deteccion precoz y comunicacion oportuna mejoran seguridad clinica.', 2),
+        ('Tecnicas basicas de cuidados auxiliares', 'La toma de constantes vitales debe realizarse con:', '["Tecnica estandarizada y registro trazable","Aproximacion visual","Estimacion verbal","Intervalos aleatorios sin pauta"]', 'Tecnica estandarizada y registro trazable', 'La estandarizacion y el registro correcto permiten seguimiento fiable.', 1),
+        ('Tecnicas basicas de cuidados auxiliares', 'En cuidados basicos, el apoyo en alimentacion e hidratacion del paciente se ajusta a:', '["Preferencias del profesional","Indicacion asistencial y plan de cuidados","Disponibilidad de familiares","Decisiones no registradas"]', 'Indicacion asistencial y plan de cuidados', 'Las intervenciones deben alinearse con el plan de cuidados y situacion clinica.', 2),
+        ('Tecnicas basicas de cuidados auxiliares', 'La prevencion de ulceras por presion incluye como medida basica:', '["Inmovilidad mantenida","Cambios posturales pautados","Reduccion de hidratacion","Retirada de superficies especiales"]', 'Cambios posturales pautados', 'La movilizacion y cambios posturales son medidas nucleares de prevencion.', 2),
+        ('Tecnicas basicas de cuidados auxiliares', 'El aseo del paciente encamado debe priorizar:', '["Rapidez sobre confort","Intimidad, seguridad y dignidad","Solo limpieza visible","Evitar participacion del paciente"]', 'Intimidad, seguridad y dignidad', 'El cuidado basico incorpora enfoque humanizado y respeto a la dignidad.', 1),
+        ('Tecnicas basicas de cuidados auxiliares', 'El material clinico reutilizable debe procesarse segun:', '["Costumbre de la unidad","Protocolos de limpieza, desinfeccion y esterilizacion","Criterio individual del turno","Disponibilidad de tiempo"]', 'Protocolos de limpieza, desinfeccion y esterilizacion', 'El reprocesado debe seguir protocolos para seguridad del paciente.', 2),
+        ('Tecnicas basicas de cuidados auxiliares', 'El trabajo del TCAE se integra en equipos donde la comunicacion eficaz es:', '["Opcional","Elemento esencial de seguridad y continuidad","Sustituible por memoria individual","Limitada a incidencias graves"]', 'Elemento esencial de seguridad y continuidad', 'La comunicacion estructurada reduce errores y mejora continuidad de cuidados.', 1),
+        ('Tecnicas basicas de cuidados auxiliares', 'Ante una incidencia con un paciente, el TCAE debe:', '["Ocultarla para evitar conflicto","Notificarla y registrarla segun procedimiento","Resolverla sin comunicar","Esperar auditoria externa"]', 'Notificarla y registrarla segun procedimiento', 'La cultura de seguridad exige notificacion y aprendizaje de incidentes.', 2),
+
+        -- Tema 4: Seguridad del paciente y prevencion de riesgos
+        ('Seguridad del paciente y prevencion de riesgos', 'La Ley de Prevencion de Riesgos Laborales es la:', '["Ley 31/1995","Ley 41/2002","Ley 16/2003","Ley 55/2003"]', 'Ley 31/1995', 'La Ley 31/1995 regula el marco general preventivo en el trabajo.', 1),
+        ('Seguridad del paciente y prevencion de riesgos', 'Un EPI es:', '["Equipo de Proteccion Individual","Elemento de Protocolo Interno","Escala de Prioridad Intermedia","Estrategia de Paciente Integrado"]', 'Equipo de Proteccion Individual', 'EPI identifica dispositivos destinados a proteger al trabajador frente a riesgos.', 1),
+        ('Seguridad del paciente y prevencion de riesgos', 'Las precauciones estandar se aplican:', '["Solo en aislamiento estricto","A todos los pacientes","Solo ante diagnostico infeccioso confirmado","Solo en UCI"]', 'A todos los pacientes', 'Las precauciones estandar constituyen base universal de bioseguridad.', 2),
+        ('Seguridad del paciente y prevencion de riesgos', 'La segregacion de residuos sanitarios debe realizarse:', '["Al cierre mensual","En origen y segun tipo de residuo","Sin clasificacion","Solo por personal externo"]', 'En origen y segun tipo de residuo', 'La gestion segura requiere clasificacion en el punto de generacion.', 1),
+        ('Seguridad del paciente y prevencion de riesgos', 'Ante exposicion accidental biologica, el procedimiento general es:', '["No comunicar para evitar alarma","Actuar de inmediato y seguir protocolo del centro","Esperar al dia siguiente","Solo registrar si hay sintomas"]', 'Actuar de inmediato y seguir protocolo del centro', 'La respuesta temprana y protocolizada reduce riesgos clinicos y laborales.', 2),
+        ('Seguridad del paciente y prevencion de riesgos', 'La higiene ambiental en unidades asistenciales contribuye a:', '["Reducir infecciones y riesgo biologico","Sustituir higiene de manos","Eliminar necesidad de protocolos","Evitar uso de EPIs"]', 'Reducir infecciones y riesgo biologico', 'El entorno limpio forma parte de la prevencion integral de infecciones.', 1),
+        ('Seguridad del paciente y prevencion de riesgos', 'La ergonomia en tareas de movilizacion persigue:', '["Aumentar ritmo sin tecnica","Disminuir lesiones musculoesqueleticas","Reducir cooperacion entre profesionales","Eliminar pausas activas"]', 'Disminuir lesiones musculoesqueleticas', 'La ergonomia previene sobrecargas y lesiones laborales del personal.', 2),
+        ('Seguridad del paciente y prevencion de riesgos', 'La cultura de seguridad del paciente se basa en:', '["Ocultar errores","Aprendizaje, notificacion y mejora continua","Sancion automatica sin analisis","Decision individual no protocolizada"]', 'Aprendizaje, notificacion y mejora continua', 'Los sistemas seguros aprenden de incidentes y aplican mejoras.', 2),
+        ('Seguridad del paciente y prevencion de riesgos', 'El control de infeccion cruzada en cuidados incluye:', '["Uso correcto de guantes y barreras segun indicacion","Uso universal de antibioticos","Intercambio de material sin reprocesado","Evitar limpieza entre pacientes"]', 'Uso correcto de guantes y barreras segun indicacion', 'Las barreras se aplican segun riesgo para evitar transmision cruzada.', 2),
+        ('Seguridad del paciente y prevencion de riesgos', 'En prevencion de caidas, una medida basica es:', '["Eliminar supervision","Valorar riesgo y aplicar medidas preventivas","Restringir movilidad sistematicamente","Retirar ayudas tecnicas"]', 'Valorar riesgo y aplicar medidas preventivas', 'La valoracion del riesgo permite intervenciones proporcionadas y eficaces.', 2),
+
+        -- Tema 5: TCAE en hospitalizacion y atencion primaria
+        ('TCAE en hospitalizacion y atencion primaria', 'En hospitalizacion, el TCAE colabora principalmente en:', '["Cuidados basicos, confort y observacion del paciente","Prescripcion farmacologica","Diagnostico medico definitivo","Alta clinica autonoma"]', 'Cuidados basicos, confort y observacion del paciente', 'El rol TCAE se centra en cuidados auxiliares y apoyo al equipo asistencial.', 1),
+        ('TCAE en hospitalizacion y atencion primaria', 'La continuidad asistencial entre niveles (hospital-atencion primaria) requiere:', '["Informacion estructurada y coordinacion","Actuaciones aisladas","Ausencia de registro","Traspaso informal no documentado"]', 'Informacion estructurada y coordinacion', 'La continuidad efectiva necesita comunicacion y documentacion entre equipos.', 2),
+        ('TCAE en hospitalizacion y atencion primaria', 'En atencion primaria, el TCAE puede apoyar en:', '["Actividades de consulta y cuidados basicos protocolizados","Cirugia mayor ambulatoria autonoma","Indicacion terapeutica independiente","Gestion fiscal del centro"]', 'Actividades de consulta y cuidados basicos protocolizados', 'El apoyo TCAE se orienta a funciones auxiliares definidas por organizacion del centro.', 2),
+        ('TCAE en hospitalizacion y atencion primaria', 'La preparacion de material y boxes asistenciales debe guiarse por:', '["Preferencia individual","Protocolos y estandares de calidad","Disponibilidad casual","Criterios no documentados"]', 'Protocolos y estandares de calidad', 'La estandarizacion mejora seguridad, eficiencia y trazabilidad.', 1),
+        ('TCAE en hospitalizacion y atencion primaria', 'La atencion centrada en la persona implica:', '["Priorizar rutina de unidad sobre paciente","Considerar necesidades, autonomia y dignidad del paciente","Reducir comunicacion con familia","Eliminar decision compartida"]', 'Considerar necesidades, autonomia y dignidad del paciente', 'La atencion centrada en la persona integra respeto, informacion y participacion.', 1),
+        ('TCAE en hospitalizacion y atencion primaria', 'En trabajo por turnos, el relevo asistencial eficaz requiere:', '["Informacion minima verbal","Comunicacion estructurada de incidencias y cuidados","No registrar cambios para ganar tiempo","Traslado de responsabilidades sin detalle"]', 'Comunicacion estructurada de incidencias y cuidados', 'El relevo seguro reduce errores y garantiza continuidad asistencial.', 2),
+        ('TCAE en hospitalizacion y atencion primaria', 'La humanizacion de la asistencia en el rol TCAE se refleja en:', '["Tecnica sin comunicacion","Trato respetuoso, empatico y seguro","Reduccion de privacidad","Estandarizacion sin adaptacion"]', 'Trato respetuoso, empatico y seguro', 'La humanizacion combina competencia tecnica con relacion asistencial de calidad.', 1),
+        ('TCAE en hospitalizacion y atencion primaria', 'La colaboracion del TCAE con enfermeria se fundamenta en:', '["Jerarquia sin coordinacion","Plan de cuidados y distribucion funcional de tareas","Sustitucion competencial plena","Ausencia de objetivos comunes"]', 'Plan de cuidados y distribucion funcional de tareas', 'La colaboracion efectiva se organiza sobre objetivos de cuidados compartidos.', 2),
+        ('TCAE en hospitalizacion y atencion primaria', 'La educacion sanitaria basica al paciente, cuando proceda, debe ser:', '["Contradictoria entre profesionales","Clara, coherente y adaptada","Exclusivamente escrita tecnica","Aportada por personal no sanitario"]', 'Clara, coherente y adaptada', 'La educacion sanitaria eficaz requiere lenguaje comprensible y mensaje coordinado.', 2),
+        ('TCAE en hospitalizacion y atencion primaria', 'Un indicador de calidad en la practica diaria del TCAE es:', '["Ausencia de registro","Cumplimiento de protocolos y seguridad del paciente","Variabilidad no justificada","Trabajo sin coordinacion de equipo"]', 'Cumplimiento de protocolos y seguridad del paciente', 'La calidad asistencial se apoya en protocolizacion, seguridad y trabajo en equipo.', 2)
+)
+INSERT INTO preguntas (tema_id, enunciado, tipo, opciones, respuesta_correcta, explicacion, dificultad)
+SELECT t.id, p.enunciado, 'MCQ', p.opciones::jsonb, p.respuesta_correcta, p.explicacion, p.dificultad
+FROM preguntas_tcae p
+JOIN temas t ON t.nombre = p.tema_nombre
+JOIN ramas_oposiciones r ON r.id = t.rama_id
+WHERE r.nombre = 'TCAE del Servicio de Salud (Estatutario)';

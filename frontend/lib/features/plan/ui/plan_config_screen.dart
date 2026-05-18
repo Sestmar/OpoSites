@@ -265,7 +265,7 @@ class _ConfigForm extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '¿Cuántas horas por semana podés dedicar?',
+                '¿Cuántas horas por semana puedes dedicar?',
                 style: AppText.caption
                     .copyWith(color: AppColors.textFaintFor(b)),
               ),
@@ -358,7 +358,7 @@ class _ConfigForm extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '¿Qué días podés estudiar? El plan solo generará tareas esos días.',
+                '¿Qué días puedes estudiar? El plan solo generará tareas esos días.',
                 style: AppText.caption.copyWith(color: AppColors.textFaintFor(b)),
               ),
               const SizedBox(height: 14),
@@ -494,7 +494,7 @@ class _ConfigForm extends StatelessWidget {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.surfaceFor(b),
-                  hintText: 'Seleccioná una fecha',
+                  hintText: 'Selecciona una fecha',
                   hintStyle: TextStyle(color: AppColors.textFaintFor(b)),
                   suffixIcon: Icon(
                     Icons.calendar_today_outlined,

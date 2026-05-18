@@ -94,7 +94,7 @@ class TestResultScreen extends ConsumerWidget {
               title: Text(
                 '$marcadasCount pregunta${marcadasCount > 1 ? 's' : ''} marcada${marcadasCount > 1 ? 's' : ''} para repasar',
               ),
-              subtitle: const Text('Podés repasar desde "Practicar"'),
+              subtitle: const Text('Puedes repasar desde "Practicar"'),
               contentPadding: EdgeInsets.zero,
               dense: true,
             ),
